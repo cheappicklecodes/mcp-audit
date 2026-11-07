@@ -1,0 +1,36 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm test
+      - run: node bin/mcp-audit.js test/fixtures/good-server --fail-on high
+      - run: node bin/mcp-audit.js test/fixtures/bad-server --fail-on critical
+      - name: audit self
+        run: node bin/mcp-audit.js . --format sarif > audit.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: matrix.node == 22
+        with:
+          sarif_file: audit.sarif
+
+  lock-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node bin/mcp-audit.js . --check

@@ -1,0 +1,20 @@
+{
+  "lockfileVersion": 1,
+  "generatedBy": "mcp-audit",
+  "servers": {
+    "mcp-audit": {
+      "fingerprint": "0088cd65b8b67cc5a15a5f7aaeecb0d1daff610feda9a56d82104073818a4580",
+      "score": 91,
+      "grade": "A",
+      "counts": {
+        "critical": 0,
+        "high": 0,
+        "medium": 2,
+        "low": 0,
+        "info": 0
+      },
+      "auditedAt": "2026-11-07",
+      "ruleset": "0.1.0"
+    }
+  }
+}

