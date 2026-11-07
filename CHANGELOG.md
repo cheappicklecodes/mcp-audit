@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.4.0
+
+The guards now follow the value, and the scanner says how sure it is.
+
+All three open defects from the review of `893208a` are closed, each with a regression test and a benchmark case.
+
+- **A. guards were block-wide.** A `_flow.js` provenance layer binds a sink to the variable that actually feeds it.
+  `allowedCommands.includes("ls")` sitting above `execSync(command)` no longer clears the finding — the review's
+  exact case. Guards are graded `strong` (mentions the value and rejects), `partial` (mentions it, never rejects)
+  and `unrelated` (an allowlist of something else). Partial and unrelated still report, at a lower severity.
+- **B. argument injection was over-broad.** Only programs known to honour `--` are reported, the program name is
+  quoted in the finding, and `execFile` sinks are covered alongside `spawn`.
+- **C. capability heuristics.** `tools/call` is now required, anchored on the string or on `registerTool`/`.tool`;
+  a bare `case` or `name ===` no longer proves a handler exists.
+- path guards had the same block-wide bug. They are now sink-specific, and a clamp is only accepted when it is on
+  the joined value and anchored on the root it was joined to, so `/srv/app-sibling` fails a check against `/srv/app`.
+  `path.relative(...).startsWith('..')` is recognised as a real clamp.
+- a plain parameter is caller data even without an `args.` prefix.
+- every finding carries `confidence`: `confirmed`, `likely` or `inconclusive`. The text report tags the last two and
+  says how many findings were pattern-matched rather than parsed; JSON and SARIF carry it too.
+- **new `benchmark/` corpus** — 36 cases: vuln, safe twin and bypass variant per rule family, scored in `npm test`
+  and CI for precision, recall and accuracy. The README states the gap ledger rather than implying coverage.
+- grade A now reads "reads clean, not proven".
 ## 0.3.0
 
 Fixes dangerous false confidence: a clamp anywhere in a file no longer silences every sink in it.

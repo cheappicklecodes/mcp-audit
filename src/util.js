@@ -22,6 +22,7 @@ export function makeFinding(rule, file, line, evidence, extra = {}) {
     rule: rule.id,
     title: rule.title,
     severity: rule.severity,
+    confidence: 'likely',
     why: rule.why,
     fix: rule.fix,
     file,

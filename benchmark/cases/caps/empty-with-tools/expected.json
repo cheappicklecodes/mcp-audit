@@ -1,0 +1,7 @@
+{
+  "rule": "capability-mismatch",
+  "expect": [
+    "capability-mismatch/medium"
+  ],
+  "note": null
+}

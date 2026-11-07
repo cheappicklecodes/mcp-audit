@@ -1,0 +1,1 @@
+execFile(args.program, ["--version"]);

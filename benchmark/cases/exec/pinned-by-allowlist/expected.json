@@ -1,0 +1,5 @@
+{
+  "rule": "caller-executable",
+  "expect": [],
+  "note": null
+}

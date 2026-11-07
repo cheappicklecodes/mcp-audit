@@ -297,6 +297,65 @@ test('an allowlist named only in a comment is still unused', () => {
   assert.ok(ids(result).has('unused-allowlist'));
 });
 
+test('review A: an unrelated includes() in the same block does not clear the shell finding', () => {
+  const body =
+    'const command = args.command;\nif (allowedCommands.includes("ls")) {\n  console.log("validated");\n}\nexecSync(command, { shell: true });\n';
+  const result = scan(tmpFile('ra.ts', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'shell-injection');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'critical');
+  assert.match(found[0].detail, /not the command/);
+});
+
+test('review A: a guard that mentions the value but never rejects is only likely', () => {
+  const body = 'const cmd = args.command;\nif (!ALLOWED.some((r) => r.test(cmd))) {\n  console.warn("warn");\n}\nexecSync(cmd, { shell: true });\n';
+  const result = scan(tmpFile('rb.ts', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'shell-injection');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'high');
+});
+
+test('review B: execFile with caller args on a flag program is argument injection', () => {
+  const result = scan(tmpFile('rc.ts', 'execFile("tar", ["-czf", args.out, args.dir]);\n'), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'argument-injection');
+  assert.equal(found.length, 1);
+  assert.match(found[0].detail, /tar honours --/);
+});
+
+test('review B: a program with no -- convention is not reported', () => {
+  const result = scan(tmpFile('rd.ts', 'execFile("my-tool", [args.x]);\n'), { only: NEW_RULES });
+  assert.ok(!ids(result).has('argument-injection'));
+});
+
+test('review C: an unrelated switch does not prove a tools/call handler exists', () => {
+  const body =
+    'const s = new Server({name:"x"},{capabilities:{tools:{listChanged:true}}});\n' +
+    's.setRequestHandler("tools/list", async()=>({}));\nswitch (mode) { case "fast": break; }\n';
+  const result = scan(tmpFile('re.ts', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'capability-mismatch');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].confidence, 'inconclusive');
+});
+
+test("review C: a banner comment naming tools/call does not count as a handler", () => {
+  const body = '// setRequestHandler("tools/call", ...) comes later\nconst s = new Server({name:"x"},{capabilities:{tools:{listChanged:true}}});\ns.setRequestHandler("tools/list", async()=>({}));\n';
+  const result = scan(tmpFile('rf.ts', body), { only: NEW_RULES });
+  assert.equal(result.findings.length, 1);
+  assert.ok(ids(result).has('capability-mismatch'));
+});
+
+test('path clamp must belong to the same value and carry a separator', () => {
+  const same = scan(tmpFile('rg.ts', 'const p = path.resolve(ROOT, args.path);\nif (!p.startsWith(ROOT + path.sep)) throw 1;\n'), { only: NEW_RULES });
+  assert.ok(!ids(same).has('path-traversal'));
+
+  const sibling = scan(tmpFile('rh.ts', 'const ROOT = "/srv/app";\nconst p = path.resolve(ROOT, args.path);\nif (!p.startsWith("/srv/app-sibling")) throw 1;\n'), { only: NEW_RULES });
+  assert.equal(sibling.findings[0].severity, 'medium');
+});
+
+test('a parameter is caller data even without an args prefix', () => {
+  const result = scan(tmpFile('ri.ts', 'function read(pathInput) {\n  return path.join(ROOT, pathInput);\n}\n'), { only: NEW_RULES });
+  assert.ok(ids(result).has('path-traversal'));
+});
 test('the new rules are reachable from the exported ruleset', () => {
   for (const id of ['path-traversal', 'shell-injection', 'caller-executable', 'argument-injection', 'capability-mismatch', 'unused-allowlist']) {
     assert.ok(ALL_RULES.some((r) => r.id === id), `missing rule ${id}`);

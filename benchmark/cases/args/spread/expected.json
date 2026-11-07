@@ -1,0 +1,8 @@
+{
+  "rule": "argument-injection",
+  "expect": [
+    "argument-injection/low"
+  ],
+  "note": null,
+  "knownGap": false
+}

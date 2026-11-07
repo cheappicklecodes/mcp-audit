@@ -1,0 +1,6 @@
+{
+  "rule": "path-traversal",
+  "expect": [],
+  "note": "negative-case",
+  "knownGap": false
+}

@@ -1,13 +1,9 @@
 import { makeFinding, lineOf, snippet } from '../util.js';
 import { stripComments, enclosingBlock, assignedTo, matchesBalanced } from './_scope.js';
+import { isCallerish, guardFor } from './_flow.js';
 
-const CALLER = /\b(?:args|arguments|params|req|request|input|body|ctx|context)\b\s*(?:\.|\[|\))/;
 const JS_JOIN = /\bpath\.(?:join|resolve)\s*\(/g;
-const PY_IDENT = /^\/\s*(?:[\w$.]+|\[)/;
 const PY_JOIN = /(?:\bPath\s*\([^)\n]*\)|\b(?:ROOT|ROOT_DIR|BASE|BASE_DIR|base|baseDir|root|home|dest|destDir|target)\b)\s*\/\s*[\w$[(]/g;
-
-const WEAK_CLAMP = /\.(?:startsWith|startswith)\s*\(/;
-const STRONG_CLAMP = /\.\.\/|path\.relative\(|realpath|\.is_relative_to\(/;
 
 export const pathTraversal = {
   id: 'path-traversal',
@@ -25,22 +21,29 @@ export const pathTraversal = {
     if (!/\.(js|mjs|cjs|ts|mts|cts|py|rb|go|rs)$/.test(file.ext)) return [];
     const text = stripComments(file.text);
     const py = /\.py$/.test(file.ext);
-    const hits = py ? PY_JOIN : JS_JOIN;
 
     const out = [];
-    for (const m of text.matchAll(new RegExp(hits.source, 'g'))) {
-      const open = text.indexOf('(', m.index);
-      const callArgs = py ? '' : matchesBalanced(text, open);
-      const after = text.slice(py ? text.indexOf('/', m.index) : open, (py ? text.indexOf('/', m.index) : open) + 120);
-      if (py ? !PY_IDENT.test(after) : !CALLER.test(callArgs)) continue;
+    for (const m of text.matchAll(new RegExp((py ? PY_JOIN : JS_JOIN).source, 'g'))) {
+      const anchor = py ? text.indexOf('/', m.index) : text.indexOf('(', m.index);
+      if (anchor < 0) continue;
+      const parts = py ? null : matchesBalanced(text, anchor).split(',');
+      const userPart = py
+        ? (/\/\s*([\w$.]+)/.exec(text.slice(anchor, anchor + 120)) ?? [])[1]
+        : (parts[1] ?? '').trim();
+      if (!userPart || !isCallerish(text, userPart, m.index)) continue;
+      const root = py
+        ? (/\/\s*([\w$.]+)/.exec(text.slice(anchor, anchor + 120)) ?? [])[1] && rootBefore(text, anchor)
+        : (parts[0] ?? '').trim();
 
-      const verdict = guardFor(text, m.index);
-      if (verdict.strength === 'strong') continue;
+      const target = assignedTo(text, m.index);
+      const guard = target ? guardFor(text, m.index, target, { after: true }) : { state: 'none' };
+      const state = settle(text, m.index, target, guard, root);
+      if (state === 'strong') continue;
 
       out.push(
         makeFinding(this, file.relative, lineOf(text, m.index), snippet(text, m.index, 55), {
-          severity: verdict.strength === 'weak' ? 'medium' : 'high',
-          detail: verdict.strength === 'weak' ? verdict.detail : 'root is joined to caller input, never clamped',
+          severity: state === 'none' ? 'high' : 'medium',
+          detail: describe(state, guard, target, Boolean(target && clampOn(text, m.index, target))),
         }),
       );
       if (out.length >= 4) break;
@@ -49,36 +52,58 @@ export const pathTraversal = {
   },
 };
 
-function guardFor(text, index) {
-  const bound = assignedTo(text, index);
-  const [start, end] = enclosingBlock(text, index);
-  const scope = text.slice(start, Math.min(end, index + 2500));
-  if (STRONG_CLAMP.test(scope)) return { strength: 'strong' };
-
-  const weak = WEAK_CLAMP.exec(scope);
-  if (!weak) return { strength: 'none' };
-
-  const operand = /(?:startsWith|startswith)\s*\(\s*([^)\n]{1,60})/.exec(scope.slice(weak.index, weak.index + 120));
-  const testVar = lastWord(scope, weak.index);
-  if (!operand) return { strength: 'weak', detail: 'clamp present but uninspectable' };
-
-  const needle = operand[1];
-  const separatorAware = /path\.sep|\bsep\b|["'`]\//.test(needle) || /\\\\/.test(needle);
-  const sameVariable = Boolean(bound) && (needle.includes(bound) || testVar === bound);
-  if (separatorAware && sameVariable) return { strength: 'strong' };
-  if (!sameVariable) {
-    const whom = testVar ?? 'another value';
-    return { strength: 'weak', detail: `clamp guards ${whom}, not the joined path` };
-  }
-  return { strength: 'weak', detail: 'startsWith without a separator: `/safe-evil` passes a check against `/safe`' };
+function rootBefore(text, anchor) {
+  const before = text.slice(Math.max(0, anchor - 80), anchor).replace(/\([^()]*\)/g, ' ');
+  const hits = [...before.matchAll(/[\w$.]+/g)];
+  return hits.length ? hits[hits.length - 1][0] : '';
 }
 
-function lastWord(text, index) {
-  let i = index - 1;
-  while (i >= 0 && /\s/.test(text[i])) i -= 1;
-  const end = i + 1;
-  while (i >= 0 && /[\w$.]/.test(text[i])) i -= 1;
-  return text.slice(i + 1, end).replace(/^\./, '') || null;
+function settle(text, index, target, guard, root) {
+  if (guard.state !== 'strong') return guard.state;
+  if (!target || !root) return 'partial';
+  if (isRelativeTo(text, index, target) || relativeForm(text, index, target)) return 'strong';
+  return separatorAware(text, index, target, root) ? 'strong' : 'partial';
+}
+
+function clampOn(text, index, target) {
+  const [start, end] = enclosingBlock(text, index);
+  const scope = text.slice(start, end);
+  const at = index - start;
+  const pattern = new RegExp(String.raw`\b` + target + String.raw`\b[^\n]{0,40}?(startsWith|startswith|is_relative_to)\s*\(([^)\n]{0,80})`, 'g');
+  const hits = [];
+  for (const m of scope.matchAll(pattern)) hits.push({ call: m[1], arg: m[2], at: m.index });
+  const before = hits.filter((h) => h.at < at).pop();
+  const after = hits.find((h) => h.at > at);
+  return before ?? after ?? null;
+}
+
+function relativeForm(text, index, target) {
+  const [start, end] = enclosingBlock(text, index);
+  const before = text.slice(start, end);
+  const pattern = String.raw`path\.relative\s*\([^)\n]{0,120}\b` + target + String.raw`\b[^)\n]{0,40}\)\s*\.\s*startsWith\s*\(\s*.{0,3}\.\.`;
+  return new RegExp(pattern).test(before);
+}
+function isRelativeTo(text, index, target) {
+  return clampOn(text, index, target)?.call === 'is_relative_to';
+}
+
+function separatorAware(text, index, target, root) {
+  const hit = clampOn(text, index, target);
+  if (!hit) return false;
+  const key = root.split('.').pop();
+  if (!new RegExp(String.raw`\b` + key + String.raw`\b`).test(hit.arg)) return false;
+  if (/path\.sep|\bsep\b/.test(hit.arg)) return true;
+  const literal = /["'`]([^"'`]{1,80})["'`]/.exec(hit.arg);
+  return Boolean(literal) && /[\\/]$/.test(literal[1]);
+}
+
+function describe(state, guard, target, clamped) {
+  if (state === 'unrelated') return `an allowlist is checked (${guard.other ?? 'another value'}), not the joined path`;
+  if (state === 'partial') {
+    if (!clamped) return 'a clamp exists but not on this result';
+    return `clamp on ${target} is not separator-aware: /srv/app-sibling passes a check against /srv/app`;
+  }
+  return 'root is joined to caller input, never clamped';
 }
 
 export const rules = [pathTraversal];

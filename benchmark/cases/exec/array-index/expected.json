@@ -1,0 +1,8 @@
+{
+  "rule": "caller-executable",
+  "expect": [
+    "caller-executable/high"
+  ],
+  "note": null,
+  "knownGap": false
+}

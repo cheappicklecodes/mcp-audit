@@ -1,0 +1,7 @@
+{
+  "rule": "path-traversal",
+  "expect": [
+    "path-traversal/medium"
+  ],
+  "note": null
+}

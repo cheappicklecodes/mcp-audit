@@ -106,7 +106,7 @@ export function score(findings, filesScanned) {
 }
 
 export function grade(value) {
-  if (value >= 90) return { letter: 'A', ansi: '\x1b[92m', note: 'reads clean' };
+  if (value >= 90) return { letter: 'A', ansi: '\x1b[92m', note: 'reads clean, not proven' };
   if (value >= 75) return { letter: 'B', ansi: '\x1b[92m', note: 'normal risk' };
   if (value >= 60) return { letter: 'C', ansi: '\x1b[93m', note: 'read before trusting' };
   if (value >= 40) return { letter: 'D', ansi: '\x1b[91m', note: 'broad reach' };

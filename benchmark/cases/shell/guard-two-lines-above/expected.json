@@ -1,0 +1,6 @@
+{
+  "rule": "shell-injection",
+  "expect": ["shell-injection/high"],
+  "note": "assert() throws but a static reader cannot prove it; high, not critical",
+  "knownGap": false
+}

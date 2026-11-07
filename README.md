@@ -65,6 +65,8 @@ Add `--explain` for what each finding means and how to fix it.
 
 A grade is a summary of *shape*, not a verdict. A small honest server that needs shell access will grade worse than a large one that does nothing interesting. Read the criticals either way.
 
+An `A` says "nothing obvious", not "proven". Very little of this is parsing — most rules are patterns, so findings carry a confidence and the report tells you how many of them were pattern-matched rather than read.
+
 ## Install
 
 ```bash
@@ -148,6 +150,24 @@ export const rules = [{
 ```bash
 mcp-audit . --rules-from ./my-rules.js
 ```
+
+## Confidence
+
+Every finding is `confirmed`, `likely` or `inconclusive`.
+
+`confirmed` is a fact in the source, like a credential literal or an empty capabilities block next to served tools. `likely` is a shape that is only dangerous in context, like caller input reaching a shell. `inconclusive` is a shape static reading cannot settle, like capabilities assembled at runtime.
+
+The last two are tagged in the report. A run that is mostly `likely` deserves more reading than its grade implies.
+
+## Benchmark
+
+`benchmark/` is a small scored corpus — vulnerability, safe twin and bypass variant per rule family — run in `npm test` and CI.
+
+```bash
+npm run bench
+```
+
+It prints precision, recall and accuracy and fails on any regression. 100% there means "nothing broke", not "solved"; the corpus was written by the same people as the rules. Its README keeps a gap ledger of shapes the scanner is expected to miss.
 
 ## What it does not do
 

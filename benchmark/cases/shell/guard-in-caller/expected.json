@@ -1,0 +1,6 @@
+{
+  "rule": "shell-injection",
+  "expect": [],
+  "note": null,
+  "knownGap": false
+}

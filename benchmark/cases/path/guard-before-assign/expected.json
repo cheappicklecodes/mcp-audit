@@ -1,0 +1,8 @@
+{
+  "rule": "path-traversal",
+  "expect": [
+    "path-traversal/high"
+  ],
+  "note": "guard runs before the join, on the raw input",
+  "knownGap": true
+}

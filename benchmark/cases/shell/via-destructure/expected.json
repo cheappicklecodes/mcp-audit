@@ -1,0 +1,7 @@
+{
+  "rule": "shell-injection",
+  "expect": [
+    "shell-injection/critical"
+  ],
+  "note": null
+}

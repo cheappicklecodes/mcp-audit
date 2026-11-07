@@ -1,0 +1,5 @@
+{
+  "rule": "path-traversal",
+  "expect": [],
+  "note": null
+}

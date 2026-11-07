@@ -1,0 +1,8 @@
+{
+  "rule": "path-traversal",
+  "expect": [
+    "path-traversal/high"
+  ],
+  "note": "normalize does not clamp",
+  "knownGap": false
+}

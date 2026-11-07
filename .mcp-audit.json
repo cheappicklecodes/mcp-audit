@@ -1,4 +1,4 @@
 {
-  "exclude": ["test/**", "src/rules/**"],
+  "exclude": ["test/**", "benchmark/**", "src/rules/**"],
   "failOn": "high"
 }

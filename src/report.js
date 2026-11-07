@@ -45,9 +45,10 @@ export function renderText(result, opts = {}) {
       out.push(`  ${c.under(file)} ${c.sev(worst, SEVERITY[worst].label)}`);
       for (const f of group) {
         const tag = (SEVERITY[f.severity]?.label ?? f.severity.toUpperCase()).padEnd(LABEL_WIDTH);
-        out.push(`    ${c.sev(f.severity, tag)} ${c.dim(`L${f.line}`)} ${f.title}`);
+        out.push(`    ${c.sev(f.severity, tag)} ${c.dim(`L${f.line}`)} ${f.title}${confidenceTag(c, f)}`);
         out.push(`      ${c.dim(f.evidence)}`);
         if (opts.explain) {
+          if (f.confidence !== 'confirmed') out.push(`      ${c.dim('detail:')} ${wrapText(f.detail ?? '', 60, 6)}`);
           out.push(`      ${c.dim('why:')} ${wrapText(f.why, 60, 6)}`);
           out.push(`      ${c.dim('fix:')} ${wrapText(f.fix, 60, 6)}`);
         }
@@ -58,8 +59,13 @@ export function renderText(result, opts = {}) {
   }
 
   const g = grade(result.score);
+  const unverified = result.findings.filter((f) => f.confidence !== 'confirmed').length;
   out.push(c.dim('─'.repeat(66)));
   out.push(`  ${c.bold('Grade')} ${c.grade(g)}${c.dim(` (${result.score}/100) — ${g.note}`)}`);
+  if (unverified) {
+    const scope = unverified === result.findings.length ? 'none of these were parsed' : `${unverified} of ${result.findings.length} were not parsed`;
+    out.push(`  ${c.dim(`heuristic: ${scope}, only pattern-matched.`)}`);
+  }
 
   if (opts.advice !== false) {
     out.push('');
@@ -69,6 +75,12 @@ export function renderText(result, opts = {}) {
   if (result.truncated) out.push(`\n  ${c.yellow('! file limit hit, results partial')}`);
   out.push('');
   return out.join('\n');
+}
+
+function confidenceTag(c, f) {
+  if (f.confidence === 'confirmed') return c.dim(' · confirmed');
+  if (f.confidence === 'inconclusive') return ` · ${c.yellow('inconclusive')}`;
+  return '';
 }
 
 export function wrapText(text, width, indent) {
@@ -97,6 +109,7 @@ export function renderJson(result, opts = {}) {
       rulesRun: result.rulesRun,
       counts: counts(result.findings),
       truncated: result.truncated,
+      unverified: result.findings.filter((f) => f.confidence !== 'confirmed').length,
       findings: result.findings,
     },
     null,
@@ -135,6 +148,7 @@ export function renderSarif(result, opts = {}) {
             ruleId: f.rule,
             level: sarifLevel(f.severity),
             message: { text: [f.title, f.evidence].filter(Boolean).join(' — ') },
+            properties: { confidence: f.confidence, detail: f.detail },
             locations: [
               {
                 physicalLocation: {
