@@ -5,10 +5,17 @@ import { fileURLToPath } from 'node:url';
 import { scan } from '../src/engine.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+const CASES = path.join(here, 'cases');
+const LOCK = path.join(here, 'manifest.lock.json');
 const RULES = ['shell-injection', 'path-traversal', 'caller-executable', 'argument-injection', 'capability-mismatch'];
+const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
+const TYPES = ['positive', 'negative', 'bypass'];
 const MARKER = /\/\* @mcpbench:([\w-]+):(start|end) \*\//g;
 
 class Malformed extends Error {}
+class Integrity extends Error {}
+
+const sha256 = (data) => crypto.createHash('sha256').update(data).digest('hex');
 
 function caseDirs(dir) {
   const out = [];
@@ -19,6 +26,10 @@ function caseDirs(dir) {
     else out.push(...caseDirs(full));
   }
   return out;
+}
+
+function relCase(dir) {
+  return path.relative(CASES, dir).split(path.sep).join('/');
 }
 
 function maskMarkers(source) {
@@ -48,46 +59,85 @@ function maskMarkers(source) {
   return { text: out, spans };
 }
 
-function sources(dir) {
-  const out = new Map();
+function sourceFiles(dir) {
+  const out = [];
   for (const entry of fs.readdirSync(dir).sort()) {
     if (entry === 'expected.json') continue;
-    const full = path.join(dir, entry);
-    if (!fs.statSync(full).isFile()) continue;
-    const { text, spans } = maskMarkers(fs.readFileSync(full, 'utf8'));
-    out.set(entry, { text, spans });
+    if (!fs.statSync(path.join(dir, entry)).isFile()) continue;
+    out.push(entry);
   }
-  if (out.size === 0) throw new Malformed('case has no source file');
+  if (!out.length) throw new Malformed('case has no source file');
   return out;
 }
 
-function load(dir) {
-  const spec = JSON.parse(fs.readFileSync(path.join(dir, 'expected.json'), 'utf8'));
-  if (spec.schemaVersion !== 2) throw new Malformed('expected.json must be schemaVersion 2');
-  if (!spec.family) throw new Malformed('expected.json needs a family');
-  const found = sources(dir);
-  const files = new Map([...found].map(([name, f]) => [name, f.text]));
-  const used = new Set();
-  const expected = [];
-  for (const want of spec.expectedFindings ?? []) {
-    if (!want.id) throw new Malformed('expected finding needs an id');
-    if (!want.anchor?.file) throw new Malformed(`${want.id}: needs anchor.file`);
-    const source = found.get(want.anchor.file);
-    if (!source) throw new Malformed(`${want.id}: no file ${want.anchor.file}`);
-    const span = source.spans.get(want.anchor.marker);
-    if (!span) throw new Malformed(`${want.id}: no marker ${want.anchor.marker} in ${want.anchor.file}`);
-    if (used.has(`${want.anchor.file}#${want.anchor.marker}`)) throw new Malformed(`${want.id}: marker reused`);
-    used.add(`${want.anchor.file}#${want.anchor.marker}`);
-    expected.push({
-      ...want,
-      rule: want.rule ?? spec.family,
-      span: { file: want.anchor.file, ...span },
-    });
+function overlaps(expected) {
+  const groups = new Map();
+  for (const want of expected) {
+    const key = `${want.anchor.file}\u0000${want.rule}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(want);
   }
-  return { spec, expected, files };
+  for (const [key, list] of groups) {
+    for (let i = 0; i < list.length; i += 1) {
+      for (let j = i + 1; j < list.length; j += 1) {
+        const a = list[i].span;
+        const b = list[j].span;
+        if (a.startOffset < b.endOffset && b.startOffset < a.endOffset) {
+          throw new Malformed(
+            `${list[i].id} and ${list[j].id} overlap on ${key.split('\u0000')[0]} for the same rule; ` +
+              'nested anchors make the match ambiguous',
+          );
+        }
+      }
+    }
+  }
 }
 
-function scanCase(dir, fileMap) {
+function load(dir) {
+  const name = relCase(dir);
+  const spec = JSON.parse(fs.readFileSync(path.join(dir, 'expected.json'), 'utf8'));
+  if (spec.schemaVersion !== 2) throw new Malformed(`${name}: expected.json must be schemaVersion 2`);
+  if (spec.id !== name) throw new Malformed(`${name}: spec.id says ${spec.id}`);
+  if (!RULES.includes(spec.family)) throw new Malformed(`${name}: unknown family ${spec.family}`);
+  if (!TYPES.includes(spec.caseType)) throw new Malformed(`${name}: caseType must be ${TYPES.join('|')}`);
+  if (!Array.isArray(spec.expectedFindings)) throw new Malformed(`${name}: expectedFindings must be an array`);
+
+  const names = sourceFiles(dir);
+  const found = new Map();
+  for (const entry of names) found.set(entry, maskMarkers(fs.readFileSync(path.join(dir, entry), 'utf8')));
+  const files = new Map([...found].map(([file, parsed]) => [file, parsed.text]));
+
+  const ids = new Set();
+  const markers = new Set();
+  const expected = [];
+  for (const want of spec.expectedFindings) {
+    const where = `${name}/${want.id ?? '<no id>'}`;
+    if (!want.id) throw new Malformed(`${name}: expected finding needs an id`);
+    if (ids.has(want.id)) throw new Malformed(`${where}: duplicate expected finding id`);
+    ids.add(want.id);
+    if (!want.anchor?.file) throw new Malformed(`${where}: needs anchor.file`);
+    if (!want.anchor.marker) throw new Malformed(`${where}: needs anchor.marker`);
+    const source = found.get(want.anchor.file);
+    if (!source) throw new Malformed(`${where}: no file ${want.anchor.file}`);
+    const span = source.spans.get(want.anchor.marker);
+    if (!span) throw new Malformed(`${where}: no marker ${want.anchor.marker} in ${want.anchor.file}`);
+    const key = `${want.anchor.file}\u0000${want.anchor.marker}`;
+    if (markers.has(key)) throw new Malformed(`${where}: marker ${want.anchor.marker} reused`);
+    markers.add(key);
+    const rule = want.rule ?? spec.family;
+    if (!RULES.includes(rule)) throw new Malformed(`${where}: unknown rule ${rule}`);
+    if (!SEVERITIES.includes(want.severity)) throw new Malformed(`${where}: severity must be ${SEVERITIES.join('|')}`);
+    expected.push({ ...want, rule, span: { file: want.anchor.file, ...span } });
+  }
+
+  if (spec.caseType === 'negative' && expected.length) throw new Malformed(`${name}: a negative case expects nothing`);
+  if (expected.length && !expected.every((e) => e.anchor.file)) throw new Malformed(`${name}: anchor without file`);
+  overlaps(expected);
+
+  return { name, spec, expected, files };
+}
+
+function scanCase(fileMap) {
   const scratch = fs.mkdtempSync(path.join(here, '.run-'));
   try {
     for (const [name, text] of fileMap) {
@@ -118,62 +168,151 @@ function eligible(want, got) {
 
 function exactCase(row) {
   const pairs = row.pairs ?? [];
-  const want = row.expected?.length ?? 0;
   return (
-    pairs.length === want &&
+    pairs.length === (row.expected?.length ?? 0) &&
     pairs.length === (row.reported?.length ?? 0) &&
     pairs.every((p) => p.exactSeverity)
   );
 }
 
 function match(expected, reported) {
-  const pairs = [];
-  const usedWant = new Set();
-  const usedGot = new Set();
-  const rank = (w, g) => (w.severity === g.severity ? 2 : 1);
+  const edges = expected.map((want) =>
+    reported
+      .map((got, gi) => ({ gi, got, agree: want.severity === got.severity }))
+      .filter((edge) => eligible(want, edge.got))
+      .sort((a, b) => Number(b.agree) - Number(a.agree)),
+  );
 
-  while (true) {
-    let best = null;
-    for (const w of expected) {
-      if (usedWant.has(w.id)) continue;
-      for (const g of reported) {
-        if (usedGot.has(g.id) || !eligible(w, g)) continue;
-        const score = rank(w, g);
-        if (!best || score > best.score) best = { w, g, score };
+  const ownerOf = new Array(reported.length).fill(-1);
+  const assigned = new Array(expected.length).fill(-1);
+
+  function assign(wi, seen) {
+    for (const edge of edges[wi]) {
+      if (seen[edge.gi]) continue;
+      seen[edge.gi] = true;
+      if (ownerOf[edge.gi] === -1 || assign(ownerOf[edge.gi], seen)) {
+        ownerOf[edge.gi] = wi;
+        assigned[wi] = edge.gi;
+        return true;
       }
     }
-    if (!best) break;
-    usedWant.add(best.w.id);
-    usedGot.add(best.g.id);
-    pairs.push({ want: best.w, got: best.g, exactSeverity: best.w.severity === best.g.severity });
+    return false;
   }
 
-  return {
-    pairs,
-    tp: pairs.length,
-    fn: expected.length - pairs.length,
-    fp: reported.length - usedGot.size,
-  };
+  for (let wi = 0; wi < expected.length; wi += 1) assign(wi, new Array(reported.length).fill(false));
+
+  const pairs = [];
+  for (let wi = 0; wi < expected.length; wi += 1) {
+    const gi = assigned[wi];
+    if (gi === -1) continue;
+    pairs.push({ want: expected[wi], got: reported[gi], exactSeverity: expected[wi].severity === reported[gi].severity });
+  }
+
+  return { pairs, tp: pairs.length, fn: expected.length - pairs.length, fp: reported.length - pairs.length };
 }
 
 const RANK = { info: 0, low: 1, medium: 2, high: 3, critical: 4 };
 
-export function run() {
-  const rows = [];
-  for (const dir of caseDirs(path.join(here, 'cases'))) {
-    const name = path.relative(path.join(here, 'cases'), dir).split(path.sep).join('/');
-    const { spec, expected, files } = load(dir);
-    const reported = scanCase(dir, files).map((r, i) => ({ ...r, id: i }));
-    const m = match(expected.map((e, i) => ({ ...e, id: i })), reported);
-    const exact = exactCase(m, expected.length);
-    const drift = m.pairs.filter((p) => !p.exactSeverity).map((p) => ({
-      want: p.want.severity,
-      got: p.got.severity,
-      direction: RANK[p.got.severity] < RANK[p.want.severity] ? 'under' : 'over',
-    }));
-    rows.push({ case: name, family: spec.family, type: spec.caseType, exact, ...m, drift, expected, reported });
+function parseAll() {
+  return caseDirs(CASES).map((dir) => ({ dir, ...load(dir) }));
+}
+
+function score(parsed) {
+  const out = [];
+  for (const { name, spec, expected, files } of parsed) {
+    const reported = scanCase(files).map((r, i) => ({ ...r, id: i }));
+    const m = match(expected, reported);
+    const drift = m.pairs
+      .filter((p) => !p.exactSeverity)
+      .map((p) => ({
+        want: p.want.severity,
+        got: p.got.severity,
+        direction: RANK[p.got.severity] < RANK[p.want.severity] ? 'under' : 'over',
+      }));
+    const row = { case: name, family: spec.family, type: spec.caseType, expected, reported, drift, ...m };
+    row.exact = exactCase(row);
+    out.push(row);
   }
-  return rows;
+  return out;
+}
+
+function caseDigest(files) {
+  const chunks = [];
+  for (const name of [...files.keys()].sort()) {
+    const body = files.get(name);
+    chunks.push(Buffer.from(`${Buffer.byteLength(name)}:${name}${sha256(body)}`, 'utf8'));
+  }
+  return sha256(Buffer.concat(chunks));
+}
+
+function rawFiles(dir) {
+  const map = new Map();
+  for (const name of fs.readdirSync(dir).sort()) {
+    if (!fs.statSync(path.join(dir, name)).isFile()) continue;
+    map.set(name, fs.readFileSync(path.join(dir, name)));
+  }
+  return map;
+}
+
+export function buildManifest() {
+  const cases = caseDirs(CASES).map((dir) => {
+    const files = rawFiles(dir);
+    const hashes = {};
+    for (const name of [...files.keys()].sort()) hashes[name] = sha256(files.get(name));
+    const spec = JSON.parse(fs.readFileSync(path.join(dir, 'expected.json'), 'utf8'));
+    return {
+      id: relCase(dir),
+      path: `cases/${relCase(dir)}`,
+      family: spec.family,
+      caseType: spec.caseType,
+      files: hashes,
+      sha256: caseDigest(files),
+    };
+  });
+  return { schemaVersion: 1, algorithm: 'sha256', caseCount: cases.length, cases };
+}
+
+function readManifest() {
+  if (!fs.existsSync(LOCK)) throw new Integrity('benchmark/manifest.lock.json is missing; run npm run bench:update-lock');
+  const manifest = JSON.parse(fs.readFileSync(LOCK, 'utf8'));
+  if (manifest.schemaVersion !== 1 || manifest.algorithm !== 'sha256') throw new Integrity('manifest header is unknown');
+  if (!Array.isArray(manifest.cases)) throw new Integrity('manifest has no case list');
+  return manifest;
+}
+
+function verify(manifest) {
+  const onDisk = new Map(caseDirs(CASES).map((dir) => [relCase(dir), dir]));
+  const locked = new Map(manifest.cases.map((c) => [c.id, c]));
+
+  const problems = [];
+  for (const [id, entry] of locked) {
+    const dir = onDisk.get(id);
+    if (!dir) {
+      problems.push(`${id}: locked case is gone`);
+      continue;
+    }
+    const files = rawFiles(dir);
+    for (const name of Object.keys(entry.files).sort()) {
+      if (!files.has(name)) problems.push(`${id}: locked file ${name} is gone`);
+      else if (sha256(files.get(name)) !== entry.files[name]) problems.push(`${id}: ${name} changed since the lock`);
+    }
+    for (const name of files.keys()) if (!(name in entry.files)) problems.push(`${id}: new file ${name} is not in the lock`);
+    if (!problems.length && caseDigest(files) !== entry.sha256) problems.push(`${id}: case digest changed`);
+  }
+  for (const id of onDisk.keys()) if (!locked.has(id)) problems.push(`${id}: case is not in the lock`);
+  if (manifest.caseCount !== manifest.cases.length) problems.push(`manifest says ${manifest.caseCount} cases but lists ${manifest.cases.length}`);
+
+  if (problems.length) {
+    const head = problems.slice(0, 20).map((p) => `  ${p}`).join('\n');
+    const more = problems.length > 20 ? `\n  ... and ${problems.length - 20} more` : '';
+    throw new Integrity(`${problems.length} integrity problem(s):\n${head}${more}`);
+  }
+}
+
+export function run() {
+  const parsed = parseAll();
+  verify(readManifest());
+  return score(parsed);
 }
 
 function ratio(n, d) {
@@ -186,10 +325,14 @@ export function summarize(rows) {
     fp: r.reported.length - r.pairs.length,
     fn: r.expected.length - r.pairs.length,
   });
-  const sum = (list) => list.reduce((a, r) => {
-    const c = count(r);
-    return { tp: a.tp + c.tp, fp: a.fp + c.fp, fn: a.fn + c.fn };
-  }, { tp: 0, fp: 0, fn: 0 });
+  const sum = (list) =>
+    list.reduce(
+      (a, r) => {
+        const c = count(r);
+        return { tp: a.tp + c.tp, fp: a.fp + c.fp, fn: a.fn + c.fn };
+      },
+      { tp: 0, fp: 0, fn: 0 },
+    );
   const overall = sum(rows);
   const families = [...new Set(rows.map((r) => r.family))].sort();
   const matched = rows.flatMap((r) => r.pairs);
@@ -206,25 +349,26 @@ export function summarize(rows) {
       families.map((f) => {
         const s = sum(rows.filter((r) => r.family === f));
         const set = rows.filter((r) => r.family === f);
-        return [f, { cases: set.length, exact: set.filter((r) => exactCase(r)).length, ...s, precision: ratio(s.tp, s.tp + s.fp), recall: ratio(s.tp, s.tp + s.fn) }];
+        return [
+          f,
+          { cases: set.length, exact: set.filter((r) => exactCase(r)).length, ...s, precision: ratio(s.tp, s.tp + s.fp), recall: ratio(s.tp, s.tp + s.fn) },
+        ];
       }),
     ),
     failed: rows.filter((r) => !exactCase(r)),
   };
 }
 
-export function manifestDigest(rows) {
-  const body = rows.map((r) => `${r.case}:${r.expected.length}`).join('\n');
-  return crypto.createHash('sha256').update(body).digest('hex').slice(0, 16);
+export function corpusDigest(manifest = buildManifest()) {
+  return sha256(manifest.cases.map((c) => `${c.id}:${c.sha256}`).join('\n'));
 }
 
 const pct = (v) => (v === null ? 'n/a' : `${(v * 100).toFixed(0)}%`);
-function tally(rows, key) {
-  return rows.filter((r) => r.type === key).length;
-}
+const tally = (rows, key) => rows.filter((r) => r.type === key).length;
 
 export function report(rows, out = (line) => console.log(line)) {
   const s = summarize(rows);
+  const manifest = readManifest();
   const families = [...new Set(rows.map((r) => r.family))].sort();
   const bar = '='.repeat(56);
   out('MCP-AUDIT BENCHMARK REPORT');
@@ -239,7 +383,8 @@ export function report(rows, out = (line) => console.log(line)) {
   out(`  Positive cases:        ${tally(rows, 'positive')}`);
   out(`  Negative cases:        ${tally(rows, 'negative')}`);
   out(`  Bypass cases:          ${tally(rows, 'bypass')}`);
-  out(`  Corpus digest:         ${manifestDigest(rows)}`);
+  out(`  Manifest:              verified (${manifest.caseCount} cases)`);
+  out(`  Corpus digest:         ${corpusDigest(manifest).slice(0, 16)}`);
   out('');
   out('PROVENANCE:');
   out('  Corpus authors:        Project maintainers');
@@ -265,9 +410,10 @@ export function report(rows, out = (line) => console.log(line)) {
   }
   out('');
   out('INTERPRETATION:');
-  out('  These are maintainer-authored regression fixtures.');
-  out('  A clean run means no regression against shapes the');
-  out('  rules were written to see, not real-world accuracy.');
+  out('  These are maintainer-authored regression fixtures,');
+  out('  hashed in a lock file so the corpus cannot drift');
+  out('  silently. A clean run means no regression against');
+  out('  shapes the rules were written to see.');
   out('');
   out('KNOWN LIMITATIONS:');
   out('  - Regex-based analysis, no AST');
@@ -301,11 +447,49 @@ export function report(rows, out = (line) => console.log(line)) {
   return s;
 }
 
+function writeLock() {
+  parseAll();
+  const manifest = buildManifest();
+  fs.writeFileSync(LOCK, `${JSON.stringify(manifest, null, 2)}\n`);
+  console.log(`wrote benchmark/manifest.lock.json (${manifest.caseCount} cases, ${corpusDigest(manifest).slice(0, 16)})`);
+}
+
 export function main(argv = process.argv.slice(2)) {
+  if (argv.includes('--update-lock')) {
+    try {
+      writeLock();
+      return 0;
+    } catch (err) {
+      console.error(`benchmark invalid: ${err.message}`);
+      return 2;
+    }
+  }
+
+  if (argv.includes('--check-lock')) {
+    try {
+      parseAll();
+      verify(readManifest());
+      console.log('benchmark manifest matches the corpus');
+      return 0;
+    } catch (err) {
+      if (err instanceof Integrity) {
+        console.error(`benchmark integrity failure (exit 3):\n${err.message}`);
+        return 3;
+      }
+      console.error(`benchmark invalid: ${err.message}`);
+      return 2;
+    }
+  }
+
   let rows;
   try {
     rows = run();
   } catch (err) {
+    if (err instanceof Integrity) {
+      console.error(`benchmark integrity failure (exit 3):\n${err.message}`);
+      console.error('\nIf the fixture change is intended, run npm run bench:update-lock and commit the manifest.');
+      return 3;
+    }
     if (err instanceof Malformed) {
       console.error(`benchmark invalid: ${err.message}`);
       return 2;
@@ -316,7 +500,7 @@ export function main(argv = process.argv.slice(2)) {
 
   if (argv.includes('--json')) {
     const s = summarize(rows);
-    console.log(JSON.stringify({ ...s, failed: s.failed.map((r) => r.case), digest: manifestDigest(rows) }, null, 2));
+    console.log(JSON.stringify({ ...s, failed: s.failed.map((r) => r.case), digest: corpusDigest() }, null, 2));
     return s.failed.length ? 1 : 0;
   }
 

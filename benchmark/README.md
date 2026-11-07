@@ -1,16 +1,19 @@
 # Benchmark
 
-A small, deliberately shaped corpus of MCP server code, one directory per case. It exists so a rule change can be scored instead of eyeballed.
+A deliberately shaped corpus of MCP server code, one directory per case. It exists so a rule change is scored rather than eyeballed.
 
 ```bash
-node benchmark/bench.mjs           # report; exits 1 on any regression
-node benchmark/bench.mjs --json    # same numbers, machine readable
-npm test                           # runs it as a test
+npm run bench                # report; 1 on any regression
+npm run bench:check-lock     # verify the corpus has not drifted
+npm run bench:update-lock    # accept a deliberate fixture change
+npm test                     # runs the scoring as a test
 ```
 
 ## Bias, stated up front
 
-The same people who write the rules write the fixtures. **100% here means "no regression against shapes the rules were written to see", not "this finds real vulnerabilities".** The report prints that provenance above the numbers, per family, every run, so the figure cannot be quoted without it.
+The same people write the fixtures and the rules. **100% means "no regression against shapes the rules were written to see", not "this finds real vulnerabilities".** The report prints that provenance above the numbers, per family, on every run, so the figure cannot be quoted without it.
+
+There is no independent corpus and no held-out split yet. Until there is, this is conformance, not accuracy.
 
 ## A case is a directory
 
@@ -26,7 +29,7 @@ cases/<family>/<name>/
 /* @mcpbench:path-0:start */path.join(ROOT, args.file)/* @mcpbench:path-0:end */
 ```
 
-and `expected.json` names that marker:
+`expected.json` names that marker:
 
 ```json
 {
@@ -43,6 +46,8 @@ and `expected.json` names that marker:
 
 Markers are masked to spaces before scanning, so they never shift a finding. A negative case carries `"expectedFindings": []` and still needs a source file.
 
+Rejected as malformed: unknown `family`, unknown `rule`, unknown `severity`, `caseType` outside `positive|negative|bypass`, an `id` that disagrees with the directory, duplicate finding ids, a reused marker, a marker that is never closed or is empty, an expectation on a `negative` case, and **two anchors for the same rule overlapping in one file** (overlap makes a match ambiguous, so it is refused rather than guessed at).
+
 ## Three measurements, not one score
 
 | Measure | Question it answers |
@@ -51,19 +56,36 @@ Markers are masked to spaces before scanning, so they never shift a finding. A n
 | Precision / recall | Was each expected finding found, and only those? |
 | Severity agreement | When it was found, was the grade right? |
 
-Detection and grading are separate. A case that finds the vulnerability *and* adds an unrelated finding is a recall hit and a precision miss — not a false negative. That distinction is the point of the split; the old scorer conflated them.
+Detection and grading are separate. A case that finds the vulnerability *and* adds an unrelated finding is a recall hit and a precision miss — not a false negative. That distinction is the whole point of the split; the old scorer conflated them.
 
-Matching is one-to-one and span-based: a reported finding must fall inside the marker for the expected one. Two findings inside one anchor cannot both satisfy it.
+Matching is one-to-one, span-based and maximum-cardinality: a reported finding must fall inside the marker for an expected one, and no reported finding satisfies two expectations.
 
 ## Exit codes
 
 | Code | Meaning |
 | --- | --- |
-| `0` | valid corpus, all cases exact |
+| `0` | valid corpus, every case exact |
 | `1` | valid corpus, at least one case regressed |
-| `2` | invalid harness: bad schema, dangling marker, unreadable case |
+| `2` | invalid harness: bad schema, dangling marker, overlapping anchor |
+| `3` | corpus drifted from the lock |
 
-A broken benchmark exits 2, never a falsy 0. Invalid evaluation is a harness failure, not a clean bill of health.
+A broken benchmark exits `2`, a drifted one `3`, never a falsy `0`. Invalid evaluation is a harness failure, not a clean bill of health.
+
+Schema is checked before integrity on purpose: a fixture that is structurally wrong reports `2` whether or not the lock also disagrees.
+
+## The lock
+
+`manifest.lock.json` records a full SHA-256 per file and a length-prefixed digest per case, over the source bytes as well as the metadata. It is written only by `bench:update-lock`.
+
+`bench` verifies it before scoring and refuses to run on a mismatch. All of these exit `3`:
+
+- a fixture edited without relocking, including a whitespace-only change or a note edit
+- a case deleted
+- a case added but never locked
+- a new file inside a locked case
+- the manifest missing
+
+This is what stops the corpus from being quietly weakened to make a bad rule look good. It is a hash, not a signature — someone rewriting both fixture and lock still wins, which is why the corpus wants `CODEOWNERS` and a second reviewer.
 
 ## Shape of the corpus
 
@@ -74,7 +96,7 @@ A broken benchmark exits 2, never a falsy 0. Invalid evaluation is a harness fai
 
 ## What is still missing
 
-The corpus contains no independently authored cases and no held-out split. Until it does, treat the numbers as regression conformance, and expect the misses below:
+No independent cases, no held-out split. Expect misses on:
 
 - taint through a helper the scanner does not follow
 - a clamp on a literal that is not the root it is joined to

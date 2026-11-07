@@ -47,3 +47,5 @@ jobs:
         with:
           node-version: 22
       - run: node bin/mcp-audit.js . --check
+      - name: benchmark corpus has not drifted
+        run: npm run bench:check-lock

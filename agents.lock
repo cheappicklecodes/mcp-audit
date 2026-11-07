@@ -3,7 +3,7 @@
   "generatedBy": "mcp-audit",
   "servers": {
     "mcp-audit": {
-      "fingerprint": "28943129bcba5be2383e6404b32116cea6d640bd8d6d861f660047bf002a3968",
+      "fingerprint": "499ba400015ad047b75863ece7069dee82ed81a38cc2f118bed4afa426a9b1e3",
       "score": 91,
       "grade": "A",
       "counts": {
@@ -14,7 +14,7 @@
         "info": 0
       },
       "auditedAt": "2026-11-07",
-      "ruleset": "0.5.0"
+      "ruleset": "0.5.1"
     }
   }
 }

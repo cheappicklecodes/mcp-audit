@@ -1,6 +1,27 @@
 # Changelog
 
+## 0.5.1
+
+The benchmark can no longer be weakened quietly.
+
+A review of 0.5.0 found three things, and all three were right.
+
+- **per-case `exact` was always false.** `run()` called `exactCase(m, expected.length)` while the function read `row.expected`, which `m` did not carry. `summarize()` recomputed it, so the headline stayed correct while the exported rows lied. Rows are now built first and scored whole.
+- **greedy matching could lose a real detection.** With nested anchors the first pleasing pair could consume the only finding a second expectation could ever match. Matching is now maximum-cardinality by augmenting path, severity agreement only choosing among equal-length solutions. Overlapping anchors for the same rule are additionally refused as malformed rather than silently interpreted.
+- **the "digest" was inventory, not content.** It hashed case name and finding count, so a changed severity, a changed anchor or any source edit left it identical. It is now a real content digest, and `manifest.lock.json` hashes every file.
+
+New:
+
+- `benchmark/manifest.lock.json` - full SHA-256 per file plus a length-prefixed per-case digest, over source bytes as well as metadata. Verified before scoring; any drift exits 3.
+- `npm run bench:check-lock` and `npm run bench:update-lock`. Only the update command writes the manifest.
+- schema loading now validates `id`, `caseType`, `severity`, `rule`, duplicate ids and reused markers, and rejects an expectation on a negative case. Schema is checked before integrity so a malformed fixture reports 2, not 3.
+- 14 harness tests that spawn the real CLI against a mutated corpus copy and pin every exit code, plus manifest coverage and content-digest tests.
+- the CI `lock-check` job now runs `bench:check-lock`.
+
+README and `benchmark/README.md` rewritten around the three measurements and the lock contract.
+
 ## 0.5.0
+
 
 The benchmark stops scoring detection and grading as the same bit, and findings gain real source spans.
 
