@@ -21,6 +21,7 @@ MCP servers are handed to agents with more permission than most npm packages eve
 - an allowlist that any `;` walks straight through
 - `~/.ssh`, `~/.aws` and `~/.npmrc` read for a tool that only needed one path
 - `path.join(ROOT, args.path)` that looks confined and walks straight out of `ROOT` on `..`
+- a `startsWith(ROOT)` clamp that lets `/safe-evil` through beside `/safe`
 
 None of that shows up in a code review, because nobody performs the review. This prints it in ten seconds.
 
@@ -29,10 +30,10 @@ None of that shows up in a code review, because nobody performs the review. This
 ```
 $ mcp-audit ./filesystem-mcp
 
-   2 critical   13 high   18 medium   0 low  · 2 files · 31 rules
+   2 critical   13 high   18 medium   0 low  · 2 files · 33 rules
 
   index.js CRITICAL
-    CRITICAL  L76 Shell command comes straight from the caller, ungated
+    CRITICAL  L76 Caller-controlled string reaches a shell
       execSync(args.command, { shell: true, cwd: ROOT })
     HIGH      L8 Server can reach the whole filesystem or home directory
       ROOT: /
@@ -127,7 +128,7 @@ Commit it. When a server updates, CI tells you the bytes moved and whether it go
 
 ## Rules
 
-31 rules across `poisoning`, `supply-chain`, `reach`, `capability`, `secrets`, `transport`, `network`, `hygiene`. `mcp-audit rules` lists them with severities.
+33 rules across `poisoning`, `supply-chain`, `reach`, `capability`, `secrets`, `transport`, `network`, `hygiene`. `mcp-audit rules` lists them with severities.
 
 Custom rules are a plain module:
 

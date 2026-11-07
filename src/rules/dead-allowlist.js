@@ -1,4 +1,5 @@
 import { makeFinding, lineOf, snippet } from '../util.js';
+import { stripComments } from './_scope.js';
 
 const DECL = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*\[\s*(\/|\n)/g;
 const ALLOWISH = /allow|ALLOW/;
@@ -15,14 +16,15 @@ export const unusedAllowlist = {
   fix: 'Apply it immediately before exec, and treat a miss as a rejection rather than a warning.',
   check(file) {
     if (!/\.(js|mjs|cjs|ts|mts|cts|py|rb)$/.test(file.ext)) return [];
+    const text = stripComments(file.text);
     const out = [];
-    for (const m of file.text.matchAll(DECL)) {
+    for (const m of text.matchAll(DECL)) {
       const name = m[1];
       if (!ALLOWISH.test(name) && !ALL_CAPS.test(name)) continue;
-      const uses = file.text.split(new RegExp('\\b' + name + '\\b')).length - 1;
+      const uses = text.split(new RegExp('\\b' + name + '\\b')).length - 1;
       if (uses > 1) continue;
       out.push(
-        makeFinding(this, file.relative, lineOf(file.text, m.index), snippet(file.text, m.index, 55), {
+        makeFinding(this, file.relative, lineOf(text, m.index), snippet(text, m.index, 55), {
           detail: name + ' is defined and never referenced',
         }),
       );

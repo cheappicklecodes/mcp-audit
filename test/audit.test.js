@@ -93,14 +93,14 @@ test('does not flag a join that resolves and clamps', () => {
 
 test('detects a caller string reaching the shell ungated', () => {
   const result = scan(fixture('bad-server'));
-  const found = result.findings.filter((f) => f.rule === 'raw-shell-interpolation');
+  const found = result.findings.filter((f) => f.rule === 'shell-injection');
   assert.equal(found.length, 1);
   assert.equal(found[0].severity, 'critical');
 });
 
 test('shell-exec alone does not imply an ungated command', () => {
   const plain = scan(fixture('bad-server'), { only: ['shell-exec'] });
-  assert.ok(!ids(plain).has('raw-shell-interpolation'));
+  assert.ok(!ids(plain).has('shell-injection'));
 });
 
 test('detects empty capabilities next to a served tool list', () => {
@@ -137,21 +137,40 @@ function tmpFile(name, body) {
   return dir;
 }
 
-const NEW_RULES = ['path-traversal', 'raw-shell-interpolation', 'capability-mismatch', 'unused-allowlist'];
+const NEW_RULES = [
+  'path-traversal',
+  'shell-injection',
+  'caller-executable',
+  'argument-injection',
+  'capability-mismatch',
+  'unused-allowlist',
+];
 
-test('python root / join is caught, and startswith clamping clears it', () => {
+test('python root / join is caught when unclamped', () => {
   const bad = scan(tmpFile('main.py', 'from pathlib import Path\nROOT = Path("/srv")\ndef r(p):\n    return (ROOT / p).read_text()\n'), { only: NEW_RULES });
-  assert.ok(ids(bad).has('path-traversal'));
-  const ok = scan(
+  assert.equal(bad.findings.filter((f) => f.rule === 'path-traversal')[0].severity, 'high');
+});
+
+test('python is_relative_to clears the rule, bare startswith only downgrades it', () => {
+  const strong = scan(
+    tmpFile('main.py', 'from pathlib import Path\nROOT = Path("/srv").resolve()\ndef r(p):\n    t = (ROOT / p).resolve()\n    if not t.is_relative_to(ROOT):\n        raise ValueError\n    return t\n'),
+    { only: NEW_RULES },
+  );
+  assert.ok(!ids(strong).has('path-traversal'));
+
+  const weak = scan(
     tmpFile('main.py', 'from pathlib import Path\nROOT = Path("/srv").resolve()\ndef r(p):\n    t = (ROOT / p).resolve()\n    if not str(t).startswith(str(ROOT)):\n        raise ValueError\n    return t\n'),
     { only: NEW_RULES },
   );
-  assert.ok(!ids(ok).has('path-traversal'));
+  const found = weak.findings.filter((f) => f.rule === 'path-traversal');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'medium');
 });
 
-test('execFile with an argv array is not an ungated shell string', () => {
+test('execFile with a fixed program is not shell injection', () => {
   const result = scan(tmpFile('a.ts', 'const out = execFileSync("ls", ["-la", dir]);\n'), { only: NEW_RULES });
-  assert.ok(!ids(result).has('raw-shell-interpolation'));
+  assert.ok(!ids(result).has('shell-injection'));
+  assert.ok(!ids(result).has('caller-executable'));
 });
 
 test('an allowlist that is applied clears both allowlist rules', () => {
@@ -167,13 +186,119 @@ test('a bare capabilities block with served tools is caught', () => {
   assert.ok(ids(result).has('capability-mismatch'));
 });
 
-test('declaring listChanged clears the capability rule', () => {
-  const result = scan(tmpFile('d.ts', 'const s = new Server({name:"x"},{capabilities:{tools:{listChanged:true}}});\ns.setRequestHandler("tools/list", async()=>({}));\n'), { only: NEW_RULES });
+test('declared capabilities plus a tools/call handler is clean', () => {
+  const body = 'const s = new Server({name:"x"},{capabilities:{tools:{listChanged:true}}});\n' +
+    's.setRequestHandler("tools/list", async()=>({}));\ns.setRequestHandler("tools/call", async()=>({}));\n';
+  const result = scan(tmpFile('d.ts', body), { only: NEW_RULES });
   assert.ok(!ids(result).has('capability-mismatch'));
 });
 
+
+test('an unrelated clamp elsewhere in the file does not hide a bad join', () => {
+  const body =
+    'function one(a) {\n  const p = a.q;\n  if (!p.startsWith("/safe/")) throw 1;\n  return p;\n}\n' +
+    'function two() {\n  return path.join(ROOT, args.path);\n}\n';
+  const result = scan(tmpFile('e.js', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'path-traversal');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'high');
+});
+
+test('one clamped operation does not cover a second unclamped one', () => {
+  const body =
+    'function a() {\n  const p = path.resolve(ROOT, args.path);\n  if (!p.startsWith(ROOT + path.sep)) throw 1;\n  return p;\n}\n' +
+    'function b() {\n  return path.join(ROOT, args.other);\n}\n';
+  const result = scan(tmpFile('f.js', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'path-traversal');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'high');
+});
+
+test('separator-less startsWith is downgraded, not cleared', () => {
+  const body = 'const p = path.resolve(ROOT, args.path);\nif (!p.startsWith(ROOT)) throw 1;\n';
+  const result = scan(tmpFile('g.js', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'path-traversal');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'medium');
+  assert.match(found[0].detail, /safe-evil|separator/);
+});
+
+test('a clamp on an unrelated variable is downgraded', () => {
+  const body = 'const p = path.resolve(ROOT, args.path);\nif (!other.startsWith("/srv/")) throw 1;\n';
+  const result = scan(tmpFile('h.js', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'path-traversal');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'medium');
+});
+
+test('a clamp in a comment does not count', () => {
+  const body = '// if (!p.startsWith(ROOT + path.sep)) throw 1;\nreturn path.join(ROOT, args.path);\n';
+  const result = scan(tmpFile('i.js', body), { only: NEW_RULES });
+  assert.equal(result.findings.filter((f) => f.rule === 'path-traversal')[0].severity, 'high');
+});
+
+test('an unrelated .test() call does not hide a raw execSync', () => {
+  const body = 'function v(x) {\n  return /^a/.test(x);\n}\nfunction run() {\n  return execSync(args.command, { shell: true });\n}\n';
+  const result = scan(tmpFile('j.ts', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'shell-injection');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'critical');
+});
+
+test('a gate in the same block clears shell injection', () => {
+  const body = 'if (!ALLOWED.some((r) => r.test(cmd))) throw new Error("no");\nexecSync(args.command);\n';
+  const result = scan(tmpFile('k.ts', body), { only: NEW_RULES });
+  assert.ok(!ids(result).has('shell-injection'));
+});
+
+test('spawn with a caller-controlled executable reports executable control', () => {
+  const result = scan(tmpFile('l.ts', 'execFile(args.program, ["--version"]);\n'), { only: NEW_RULES });
+  assert.ok(ids(result).has('caller-executable'));
+  assert.ok(!ids(result).has('shell-injection'));
+});
+
+test('fixed program with caller args and no -- terminator is argument injection', () => {
+  const result = scan(tmpFile('m.ts', 'spawn("git", [args.ref, args.file]);\n'), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'argument-injection');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'low');
+});
+
+test('a -- terminator clears argument injection', () => {
+  const result = scan(tmpFile('n.ts', 'spawn("git", ["--", args.file]);\n'), { only: NEW_RULES });
+  assert.ok(!ids(result).has('argument-injection'));
+});
+
+test('a literal command string is not caller-controlled', () => {
+  const result = scan(tmpFile('o.ts', 'execSync("ls -la");\n'), { only: NEW_RULES });
+  assert.deepEqual([...ids(result)], []);
+});
+
+test('dynamic registration is reported as inconclusive, not safe', () => {
+  const body = 'const server = new Server({name:"x"}, { capabilities: base });\nfor (const t of tools) server.registerTool(t);\n';
+  const result = scan(tmpFile('p.ts', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'capability-mismatch');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'info');
+  assert.match(found[0].detail, /inconclusive/);
+});
+
+test('tools advertised without a tools/call handler is reported', () => {
+  const body = 'const s = new Server({name:"x"},{capabilities:{tools:{listChanged:true}}});\ns.setRequestHandler("tools/list", async()=>({}));\n';
+  const result = scan(tmpFile('q.ts', body), { only: NEW_RULES });
+  const found = result.findings.filter((f) => f.rule === 'capability-mismatch');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'low');
+});
+
+test('an allowlist named only in a comment is still unused', () => {
+  const body = 'const ALLOWED_COMMANDS = [/^ls/];\n// referenced here only: ALLOWED_COMMANDS\nexecSync(args.command);\n';
+  const result = scan(tmpFile('r.ts', body), { only: NEW_RULES });
+  assert.ok(ids(result).has('unused-allowlist'));
+});
+
 test('the new rules are reachable from the exported ruleset', () => {
-  for (const id of ['path-traversal', 'raw-shell-interpolation', 'capability-mismatch', 'unused-allowlist']) {
+  for (const id of ['path-traversal', 'shell-injection', 'caller-executable', 'argument-injection', 'capability-mismatch', 'unused-allowlist']) {
     assert.ok(ALL_RULES.some((r) => r.id === id), `missing rule ${id}`);
   }
 });
