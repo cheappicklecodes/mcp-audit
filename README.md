@@ -173,7 +173,7 @@ It prints precision, recall and accuracy and fails on any regression. 100% there
 
 - **No network.** It reads source. It does not run the server, call its tools, or fetch anything.
 - **No sandboxing.** It tells you the blast radius; it does not contain it.
-- **No taint tracking.** It matches shapes, so it will miss logic bugs and business-logic exfiltration.
+- **Only one hop of provenance.** It follows a value from a local binding to a sink, not through helper functions or branches, so it will miss logic bugs and business-logic exfiltration.
 - **Not a substitute for reading.** A high grade means "nothing obvious", not "safe".
 
 It also, deliberately, does not phone home.
