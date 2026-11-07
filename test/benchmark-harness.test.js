@@ -11,6 +11,7 @@ function sandbox() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bench-"));
   fs.cpSync(path.join(repo, "benchmark"), path.join(dir, "benchmark"), { recursive: true });
   fs.cpSync(path.join(repo, "src"), path.join(dir, "src"), { recursive: true });
+  fs.copyFileSync(path.join(repo, "package.json"), path.join(dir, "package.json"));
   return dir;
 }
 
