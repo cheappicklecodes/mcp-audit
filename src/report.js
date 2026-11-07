@@ -127,14 +127,14 @@ export function renderSarif(result, opts = {}) {
             driver: {
               name: 'mcp-audit',
               version: opts.version ?? '0.1.0',
-              informationUri: 'https://github.com/luci/mcp-audit',
+              informationUri: 'https://github.com/cheappicklecodes/mcp-audit',
               rules: [...rules.values()],
             },
           },
           results: result.findings.map((f) => ({
             ruleId: f.rule,
             level: sarifLevel(f.severity),
-            message: { text: `${f.title} — ${f.detail ?? ''}`.trim() },
+            message: { text: [f.title, f.evidence].filter(Boolean).join(' — ') },
             locations: [
               {
                 physicalLocation: {

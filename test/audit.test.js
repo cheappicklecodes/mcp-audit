@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scan, grade, score } from '../src/engine.js';
+import { renderSarif } from '../src/report.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixture = (name) => path.join(here, 'fixtures', name);
@@ -127,4 +128,17 @@ test('an empty directory scans clean', () => {
   const result = scan(path.join(here, 'fixtures', 'empty'));
   assert.equal(result.findings.length, 0);
   assert.equal(result.score, 100);
+});
+
+test('sarif is valid and carries evidence, not a dangling dash', () => {
+  const result = scan(fixture('bad-server'));
+  const sarif = JSON.parse(renderSarif(result, { version: '0.0.0' }));
+  assert.equal(sarif.version, '2.1.0');
+  assert.equal(sarif.runs.length, 1);
+  assert.equal(sarif.runs[0].results.length, result.findings.length);
+  for (const r of sarif.runs[0].results) {
+    assert.ok(r.message.text.length > 0);
+    assert.ok(!r.message.text.endsWith('—'), `dangling dash: ${r.message.text}`);
+    assert.ok(r.locations[0].physicalLocation.region.startLine >= 1);
+  }
 });
