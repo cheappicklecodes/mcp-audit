@@ -56,6 +56,15 @@ error: symlink not permitted at path/junction; bytes are not hashed
 
 That matters most in CI, where the corpus arrives from an untrusted fork. A contributor's symlink is not silently trusted to point somewhere sane; it is a malformed harness (exit `2`) until it is replaced by a real directory.
 
+The check covers the paths a link would be most useful on, not just the entries inside a case:
+
+- `benchmark/cases` itself, so the whole corpus can be redirected at once;
+- every case directory, including the intermediate `cases/<family>` level;
+- `expected.json`, for every case;
+- `manifest.lock.json`.
+
+Metadata is also required to be a regular file, not merely link-free — a directory where `expected.json` belongs is a malformed case, not an unreadable one.
+
 Rejected as malformed: unknown `family`, unknown `rule`, unknown `severity`, `caseType` outside `positive|negative|bypass`, an `id` that disagrees with the directory, duplicate finding ids, a reused marker, a marker that is never closed or is empty, an expectation on a `negative` case, and **two anchors for the same rule overlapping in one file** (overlap makes a match ambiguous, so it is refused rather than guessed at).
 
 ## Three measurements, not one score

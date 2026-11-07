@@ -209,6 +209,81 @@ test("a nested directory inside a case exits 2", () => {
   });
 });
 
+function linkFile(t, target, link) {
+  try {
+    fs.symlinkSync(target, link, "file");
+    return true;
+  } catch (error) {
+    if (error.code === "EPERM") {
+      t.skip("file symlinks need Developer Mode or admin on Windows");
+      return false;
+    }
+    throw error;
+  }
+}
+
+test("the cases root itself being a symlink exits 2", () => {
+  withSandbox((dir) => {
+    const root = path.join(dir, "benchmark", "cases");
+    const real = path.join(dir, "benchmark", "cases-real");
+    fs.renameSync(root, real);
+    fs.symlinkSync(real, root, "junction");
+    const { code, text } = bench(dir);
+    assert.equal(code, 2);
+    assert.match(text, /symlink not permitted at benchmark\/cases/);
+  });
+});
+
+test("a symlinked expected.json exits 2", (t) => {
+  withSandbox((dir) => {
+    const target = path.join(dir, "benchmark", "cases", "shell", "literal", "expected.json");
+    const real = path.join(dir, "benchmark", "cases", "shell", "literal", "expected.real.json");
+    fs.renameSync(target, real);
+    if (!linkFile(t, real, target)) return;
+    const { code, text } = bench(dir);
+    assert.equal(code, 2);
+    assert.match(text, /symlink not permitted at shell\/literal\/expected\.json/);
+  });
+});
+
+test("a symlinked manifest exits 2", (t) => {
+  withSandbox((dir) => {
+    const target = path.join(dir, "benchmark", "manifest.lock.json");
+    const real = path.join(dir, "benchmark", "manifest.real.json");
+    fs.renameSync(target, real);
+    if (!linkFile(t, real, target)) return;
+    const { code, text } = bench(dir);
+    assert.equal(code, 2);
+    assert.match(text, /symlink not permitted at benchmark\/manifest\.lock\.json/);
+  });
+});
+
+test("a junction where a metadata file belongs exits 2", () => {
+  withSandbox((dir) => {
+    const target = path.join(dir, "benchmark", "cases", "shell", "literal", "expected.json");
+    fs.renameSync(target, path.join(dir, "benchmark", "cases", "shell", "literal", "expected.real.json"));
+    fs.symlinkSync(
+      path.join(dir, "benchmark", "cases", "shell", "literal", "expected.real.json"),
+      target,
+      "junction",
+    );
+    const { code, text } = bench(dir);
+    assert.equal(code, 2);
+    assert.match(text, /symlink not permitted at shell\/literal\/expected\.json/);
+  });
+});
+
+test("a metadata path that is a directory exits 2", () => {
+  withSandbox((dir) => {
+    const target = path.join(dir, "benchmark", "cases", "shell", "literal", "expected.json");
+    fs.rmSync(target);
+    fs.mkdirSync(target);
+    const { code, text } = bench(dir);
+    assert.equal(code, 2);
+    assert.match(text, /expected\.json is not a regular file/);
+  });
+});
+
 test("overlapping anchors for one rule exit 2", () => {
   withSandbox((dir) => {
     edit(dir, "path/join-bare/index.ts", (t) => t.replace(

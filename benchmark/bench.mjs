@@ -17,16 +17,29 @@ class Integrity extends Error {}
 
 const sha256 = (data) => crypto.createHash('sha256').update(data).digest('hex');
 
+const label = (full) => path.relative(CASES, full).split(path.sep).join('/') || 'benchmark/cases';
+
+function statNoLink(full, where) {
+  const stat = fs.lstatSync(full);
+  if (stat.isSymbolicLink()) throw new Malformed(`symlink not permitted at ${where}; bytes are not hashed`);
+  return stat;
+}
+
+function readFile(full, where) {
+  const stat = fs.lstatSync(full);
+  if (stat.isSymbolicLink()) throw new Malformed(`symlink not permitted at ${where}; bytes are not hashed`);
+  if (!stat.isFile()) throw new Malformed(`${where} is not a regular file`);
+  return fs.readFileSync(full);
+}
+
 function entries(dir) {
+  statNoLink(dir, label(dir));
   return fs
     .readdirSync(dir)
     .sort()
     .map((entry) => {
       const full = path.join(dir, entry);
-      const stat = fs.lstatSync(full);
-      if (stat.isSymbolicLink()) {
-        throw new Malformed(`symlink not permitted at ${path.relative(CASES, full) || entry}; bytes are not hashed`);
-      }
+      const stat = statNoLink(full, label(full));
       return { entry, full, isDir: stat.isDirectory() };
     });
 }
@@ -110,7 +123,7 @@ function overlaps(expected) {
 
 function load(dir) {
   const name = relCase(dir);
-  const spec = JSON.parse(fs.readFileSync(path.join(dir, 'expected.json'), 'utf8'));
+  const spec = JSON.parse(readFile(path.join(dir, 'expected.json'), `${name}/expected.json`).toString('utf8'));
   if (spec.schemaVersion !== 2) throw new Malformed(`${name}: expected.json must be schemaVersion 2`);
   if (spec.id !== name) throw new Malformed(`${name}: spec.id says ${spec.id}`);
   if (!RULES.includes(spec.family)) throw new Malformed(`${name}: unknown family ${spec.family}`);
@@ -119,7 +132,7 @@ function load(dir) {
 
   const names = sourceFiles(dir);
   const found = new Map();
-  for (const entry of names) found.set(entry, maskMarkers(fs.readFileSync(path.join(dir, entry), 'utf8')));
+  for (const entry of names) found.set(entry, maskMarkers(readFile(path.join(dir, entry), `${name}/${entry}`).toString('utf8')));
   const files = new Map([...found].map(([file, parsed]) => [file, parsed.text]));
 
   const ids = new Set();
@@ -264,7 +277,7 @@ function rawFiles(dir) {
   const map = new Map();
   for (const { entry, isDir, full } of entries(dir)) {
     if (isDir) continue;
-    map.set(entry, fs.readFileSync(full));
+    map.set(entry, readFile(full, `${relCase(dir)}/${entry}`));
   }
   return map;
 }
@@ -274,7 +287,7 @@ export function buildManifest() {
     const files = rawFiles(dir);
     const hashes = {};
     for (const name of [...files.keys()].sort()) hashes[name] = sha256(files.get(name));
-    const spec = JSON.parse(fs.readFileSync(path.join(dir, 'expected.json'), 'utf8'));
+    const spec = JSON.parse(readFile(path.join(dir, 'expected.json'), `${relCase(dir)}/expected.json`).toString('utf8'));
     return {
       id: relCase(dir),
       path: `cases/${relCase(dir)}`,
@@ -289,7 +302,7 @@ export function buildManifest() {
 
 function readManifest() {
   if (!fs.existsSync(LOCK)) throw new Integrity('benchmark/manifest.lock.json is missing; run npm run bench:update-lock');
-  const manifest = JSON.parse(fs.readFileSync(LOCK, 'utf8'));
+  const manifest = JSON.parse(readFile(LOCK, 'benchmark/manifest.lock.json').toString('utf8'));
   if (manifest.schemaVersion !== 1 || manifest.algorithm !== 'sha256') throw new Integrity('manifest header is unknown');
   if (!Array.isArray(manifest.cases)) throw new Integrity('manifest has no case list');
   return manifest;

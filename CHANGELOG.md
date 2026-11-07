@@ -11,9 +11,15 @@ The benchmark harness no longer trusts a directory tree it did not write.
 
 Every entry is now `lstat`ed by one shared helper and any symlink is a malformed harness (exit `2`, reported with its relative path) rather than a silently followed one. Separately, a subdirectory inside a case was previously skipped by the file lists while remaining unhashed; nesting is now also rejected, with the reason in the message.
 
-Three regression tests spawn the CLI against a corpus carrying a junction to a parent, a junction outside the tree, and a nested directory, and pin exit `2` for each.
-
 Also in this release: the README install command is pinned to a release tag instead of the moving default branch, and `SECURITY.md` records what to do about a credential pasted into a thread.
+
+## 0.5.3
+
+0.5.2 checked every entry inside a directory and trusted the directory itself. That left the same class of hole one level up: `benchmark/cases` could be a link and redirect the entire corpus, and `expected.json` or `manifest.lock.json` could be a link to a file outside the tree and be read before any check ran.
+
+The `lstat` guard now covers the roots as well as the entries — the corpus root, every case directory, every `expected.json`, and the manifest — and each is validated before it is read rather than after. Metadata must additionally be a regular file, so a directory sitting where `expected.json` belongs is a malformed case instead of an unreadable one. Failure labels are normalized to forward slashes so the reported path matches the corpus layout on every platform.
+
+Three more regression tests cover a linked corpus root, a linked metadata file and a directory where metadata belongs. The two file-symlink cases need Developer Mode or an administrator on Windows and skip with a stated reason rather than passing quietly; CI runs them on Linux.
 
 ## 0.5.1
 
