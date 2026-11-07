@@ -26,7 +26,7 @@ None of that shows up in a code review, because nobody performs the review. This
 ```
 $ mcp-audit ./filesystem-mcp
 
-   1 critical   10 high   16 medium  · 2 files · 27 rules
+   1 critical   10 high   16 medium   0 low  · 2 files · 27 rules
 
   index.js CRITICAL
     CRITICAL  L76 Executes shell commands
@@ -101,7 +101,7 @@ Or use SARIF with GitHub code scanning:
 
 ```yaml
 - run: npx mcp-audit . --format sarif > audit.sarif
-- uses: github/codeql-action/upload-sarif@v3
+- uses: github/codeql-action/upload-sarif@v4
   with: { sarif_file: audit.sarif }
 ```
 
