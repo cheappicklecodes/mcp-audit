@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import fs from 'node:fs';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { scan, grade, score } from '../src/engine.js';
 import { renderSarif } from '../src/report.js';
@@ -141,4 +143,20 @@ test('sarif is valid and carries evidence, not a dangling dash', () => {
     assert.ok(!r.message.text.endsWith('—'), `dangling dash: ${r.message.text}`);
     assert.ok(r.locations[0].physicalLocation.region.startLine >= 1);
   }
+});
+
+test('a repository url is not reported as a git dependency', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-audit-repo-'));
+  fs.writeFileSync(
+    path.join(dir, 'package.json'),
+    JSON.stringify({
+      name: 'x',
+      repository: { type: 'git', url: 'git+https://github.com/someone/x.git' },
+      dependencies: { pinned: 'git+https://github.com/someone/y.git#0123456789abcdef0123456789abcdef01234567' },
+    }),
+  );
+  const result = scan(dir, { only: ['git-dependency'] });
+  assert.equal(result.findings.length, 1);
+  assert.match(result.findings[0].evidence, /pinned/);
+  assert.equal(result.findings[0].severity, 'low');
 });

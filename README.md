@@ -7,7 +7,7 @@ You install an MCP server and it gets your shell, your files and your tokens. It
 Zero dependencies. One command. No account.
 
 ```bash
-npx mcp-audit .
+npx mcpaudit .
 ```
 
 ## Why
@@ -62,9 +62,11 @@ A grade is a summary of *shape*, not a verdict. A small honest server that needs
 ## Install
 
 ```bash
-npx mcp-audit .                 # no install
-npm i -g mcp-audit              # or global
+npx mcpaudit .                 # no install
+npm i -g mcpaudit              # or global
 ```
+
+The package is `mcpaudit`; the command it installs is `mcp-audit`. The bare `mcp-audit` name on npm was already taken by an unrelated placeholder.
 
 ## Usage
 
@@ -94,13 +96,13 @@ Keys: `exclude`, `include`, `disable`, `only`, `minSeverity`, `failOn`. CLI flag
 ### In CI
 
 ```yaml
-- run: npx mcp-audit . --fail-on critical   # or failOn in .mcp-audit.json
+- run: npx mcpaudit . --fail-on critical   # or failOn in .mcp-audit.json
 ```
 
 Or use SARIF with GitHub code scanning:
 
 ```yaml
-- run: npx mcp-audit . --format sarif > audit.sarif
+- run: npx mcpaudit . --format sarif > audit.sarif
 - uses: github/codeql-action/upload-sarif@v4
   with: { sarif_file: audit.sarif }
 ```

@@ -107,6 +107,9 @@ export const unpinnedDependencies = {
   },
 };
 
+const isGitSpec = (spec) => /^(git\+(ssh|https):\/\/|git:\/\/)|^https?:\/\/github\.com\/[^/]+\/[^/]+\/tarball\//.test(spec);
+const hasSha = (spec) => /[0-9a-f]{40}/.test(spec);
+
 export const gitDependency = {
   id: 'git-dependency',
   group: 'supply-chain',
@@ -116,16 +119,35 @@ export const gitDependency = {
   fix: 'Pin to a full 40-character commit SHA.',
   check(file) {
     if (!/\.(json|toml|txt)$/.test(file.ext)) return [];
+
+    if (file.name === 'package.json') {
+      const pkg = parseJson(file.text);
+      if (!pkg) return [];
+      const out = [];
+      for (const field of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+        for (const [dep, spec] of Object.entries(pkg[field] ?? {})) {
+          if (typeof spec !== 'string' || !isGitSpec(spec)) continue;
+          const idx = file.text.indexOf(`"${dep}"`);
+          out.push(
+            makeFinding(this, file.relative, lineOf(file.text, idx), `${dep}: ${spec}`, {
+              severity: hasSha(spec) ? 'low' : this.severity,
+              detail: hasSha(spec) ? 'pinned to a commit' : 'ref can move',
+            }),
+          );
+        }
+      }
+      return out;
+    }
+
     const re = /(git\+ssh:\/\/|git\+https:\/\/|git:\/\/|https:\/\/github\.com\/[^"'\s]+\/tarball\/)[^"'\s]*/g;
     const out = [];
     let m;
     while ((m = re.exec(file.text))) {
       const spec = m[0];
-      const hasSha = /[0-9a-f]{40}/.test(spec);
       out.push(
         makeFinding(this, file.relative, lineOf(file.text, m.index), spec, {
-          severity: hasSha ? 'low' : this.severity,
-          detail: hasSha ? 'pinned to a commit' : 'ref can move',
+          severity: hasSha(spec) ? 'low' : this.severity,
+          detail: hasSha(spec) ? 'pinned to a commit' : 'ref can move',
         }),
       );
     }
