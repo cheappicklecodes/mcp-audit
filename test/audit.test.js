@@ -4,7 +4,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { scan, grade, score } from '../src/engine.js';
+import { scan, grade, score, ALL_RULES } from '../src/engine.js';
 import { renderSarif } from '../src/report.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -77,6 +77,105 @@ test('detects a bypassable command allowlist', () => {
 test('flags a hardcoded credential literal', () => {
   const result = scan(fixture('bad-server'));
   assert.ok(ids(result).has('hardcoded-secret'));
+});
+
+test('detects an unclamped join of caller input to a root', () => {
+  const result = scan(fixture('bad-server'));
+  const found = result.findings.filter((f) => f.rule === 'path-traversal');
+  assert.ok(found.length >= 2, `expected joins for read, list and write, got ${found.length}`);
+  assert.ok(found.every((f) => f.line >= 1));
+});
+
+test('does not flag a join that resolves and clamps', () => {
+  const result = scan(fixture('good-server'));
+  assert.ok(!ids(result).has('path-traversal'));
+});
+
+test('detects a caller string reaching the shell ungated', () => {
+  const result = scan(fixture('bad-server'));
+  const found = result.findings.filter((f) => f.rule === 'raw-shell-interpolation');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].severity, 'critical');
+});
+
+test('shell-exec alone does not imply an ungated command', () => {
+  const plain = scan(fixture('bad-server'), { only: ['shell-exec'] });
+  assert.ok(!ids(plain).has('raw-shell-interpolation'));
+});
+
+test('detects empty capabilities next to a served tool list', () => {
+  const result = scan(fixture('bad-server'));
+  assert.ok(ids(result).has('capability-mismatch'));
+});
+
+test('does not flag capabilities on a server that declares them', () => {
+  const result = scan(fixture('good-server'));
+  assert.ok(!ids(result).has('capability-mismatch'));
+});
+
+test('detects an allowlist that is never applied', () => {
+  const result = scan(fixture('bad-server'));
+  const found = result.findings.filter((f) => f.rule === 'unused-allowlist');
+  assert.equal(found.length, 1);
+  assert.match(found[0].evidence, /ALLOWED_COMMANDS/);
+});
+
+test('a used allowlist is not reported as dead', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-audit-allow-'));
+  fs.writeFileSync(
+    path.join(dir, 'index.js'),
+    'const ALLOWED = [/^ls/];\nif (!ALLOWED.some((r) => r.test(cmd))) throw new Error("no");\nexecSync(cmd);\n',
+  );
+  const result = scan(dir, { only: ['unused-allowlist'] });
+  assert.equal(result.findings.length, 0);
+});
+
+
+function tmpFile(name, body) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-audit-case-'));
+  fs.writeFileSync(path.join(dir, name), body);
+  return dir;
+}
+
+const NEW_RULES = ['path-traversal', 'raw-shell-interpolation', 'capability-mismatch', 'unused-allowlist'];
+
+test('python root / join is caught, and startswith clamping clears it', () => {
+  const bad = scan(tmpFile('main.py', 'from pathlib import Path\nROOT = Path("/srv")\ndef r(p):\n    return (ROOT / p).read_text()\n'), { only: NEW_RULES });
+  assert.ok(ids(bad).has('path-traversal'));
+  const ok = scan(
+    tmpFile('main.py', 'from pathlib import Path\nROOT = Path("/srv").resolve()\ndef r(p):\n    t = (ROOT / p).resolve()\n    if not str(t).startswith(str(ROOT)):\n        raise ValueError\n    return t\n'),
+    { only: NEW_RULES },
+  );
+  assert.ok(!ids(ok).has('path-traversal'));
+});
+
+test('execFile with an argv array is not an ungated shell string', () => {
+  const result = scan(tmpFile('a.ts', 'const out = execFileSync("ls", ["-la", dir]);\n'), { only: NEW_RULES });
+  assert.ok(!ids(result).has('raw-shell-interpolation'));
+});
+
+test('an allowlist that is applied clears both allowlist rules', () => {
+  const result = scan(
+    tmpFile('b.ts', 'const ALLOWED = [/^ls/];\nif (!ALLOWED.some((r) => r.test(cmd))) throw new Error("no");\nexecSync(cmd);\n'),
+    { only: NEW_RULES },
+  );
+  assert.deepEqual([...ids(result)], []);
+});
+
+test('a bare capabilities block with served tools is caught', () => {
+  const result = scan(tmpFile('c.ts', 'const s = new Server({name:"x"},{capabilities:{}});\ns.setRequestHandler("tools/list", async()=>({}));\n'), { only: NEW_RULES });
+  assert.ok(ids(result).has('capability-mismatch'));
+});
+
+test('declaring listChanged clears the capability rule', () => {
+  const result = scan(tmpFile('d.ts', 'const s = new Server({name:"x"},{capabilities:{tools:{listChanged:true}}});\ns.setRequestHandler("tools/list", async()=>({}));\n'), { only: NEW_RULES });
+  assert.ok(!ids(result).has('capability-mismatch'));
+});
+
+test('the new rules are reachable from the exported ruleset', () => {
+  for (const id of ['path-traversal', 'raw-shell-interpolation', 'capability-mismatch', 'unused-allowlist']) {
+    assert.ok(ALL_RULES.some((r) => r.id === id), `missing rule ${id}`);
+  }
 });
 
 test('--only limits the rule set', () => {

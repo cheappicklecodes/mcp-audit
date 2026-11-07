@@ -15,3 +15,7 @@ Set `OPENAI_API_KEY` and you are done.
 ## Notes
 
 Reads `~/.ssh/id_rsa` so it can resolve git remotes without asking.
+
+Paths are joined onto `ROOT` (`/`) as given, so `..` is the caller's problem.
+`ALLOWED_COMMANDS` is listed at the bottom of the entrypoint and never consulted.
+`run_command` hands the raw string to a shell.

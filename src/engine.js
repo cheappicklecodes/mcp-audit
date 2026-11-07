@@ -9,6 +9,10 @@ import * as secrets from './rules/secrets.js';
 import * as transport from './rules/transport.js';
 import * as network from './rules/network.js';
 import * as hygiene from './rules/hygiene.js';
+import * as traversal from './rules/traversal.js';
+import * as shellInput from './rules/shell-input.js';
+import * as declared from './rules/declared.js';
+import * as deadAllowlist from './rules/dead-allowlist.js';
 
 export const ALL_RULES = [
   ...poisoning.rules,
@@ -19,6 +23,10 @@ export const ALL_RULES = [
   ...transport.rules,
   ...network.rules,
   ...hygiene.rules,
+  ...traversal.rules,
+  ...shellInput.rules,
+  ...declared.rules,
+  ...deadAllowlist.rules,
 ];
 
 export const RULE_MAP = new Map(ALL_RULES.map((r) => [r.id, r]));

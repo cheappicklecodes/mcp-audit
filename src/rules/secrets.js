@@ -15,7 +15,9 @@ export const hardcodedSecret = {
   title: 'Credential appears as a literal',
   severity: 'high',
   why: 'A committed key is shared with everyone who reads the repo and never rotates itself.',
-  fix: 'Move it to an environment variable and rotate the value.',
+  fix:
+    'Rotate it at the provider — assume it is already public — then read it from an env var or `.env` that is ' +
+    'gitignored. Deleting the line is not enough; the value lives on in history.',
   check(file) {
     const out = [];
     for (const { re, note } of SECRET_LITERALS) {
