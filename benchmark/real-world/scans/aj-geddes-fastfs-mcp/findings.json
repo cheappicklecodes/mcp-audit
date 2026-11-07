@@ -1,0 +1,113 @@
+{
+  "tool": "mcp-audit",
+  "version": "0.5.3",
+  "root": "src/aj-geddes-fastfs-mcp",
+  "score": 73,
+  "grade": "C",
+  "filesScanned": 8,
+  "rulesRun": 33,
+  "counts": {
+    "critical": 0,
+    "high": 5,
+    "medium": 3,
+    "low": 0,
+    "info": 0
+  },
+  "truncated": false,
+  "unverified": 8,
+  "findings": [
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "git_tools.py",
+      "line": 29,
+      "evidence": "HTTPS with credentials in URL try: subprocess.run( \"git config --global",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "git_tools.py",
+      "line": 119,
+      "evidence": "] result = subprocess.run(cmd, capture_output=True, text",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "git_tools.py",
+      "line": 139,
+      "evidence": "access_tokens\" ] result = subprocess.run(cmd, capture_output=True, text",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "git_tools.py",
+      "line": 198,
+      "evidence": "the credential helper subprocess.run( f'git",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "server.py",
+      "line": 42,
+      "evidence": "file=sys.stderr, flush=True) result = subprocess.run( cmd,",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "write-capability",
+      "title": "Can write or mutate files and state",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible.",
+      "fix": "Confine write roots, and prefer explicit overwrite semantics over silent replace.",
+      "file": "server.py",
+      "line": 376,
+      "evidence": "True) if recursive: shutil.copytree(source, destination, dirs_exist_ok"
+    },
+    {
+      "rule": "write-capability",
+      "title": "Can write or mutate files and state",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible.",
+      "fix": "Confine write roots, and prefer explicit overwrite semantics over silent replace.",
+      "file": "server.py",
+      "line": 379,
+      "evidence": "destination}'\" else: shutil.copy2(source, destination)"
+    },
+    {
+      "rule": "write-capability",
+      "title": "Can write or mutate files and state",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible.",
+      "fix": "Confine write roots, and prefer explicit overwrite semantics over silent replace.",
+      "file": "server.py",
+      "line": 403,
+      "evidence": ") or choose a different name.\" shutil.move(source, destination)"
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "tool": "mcp-audit",
+  "version": "0.5.3",
+  "root": "src/webconsulting-mcp-server-wsl-filesystem",
+  "score": 65,
+  "grade": "C",
+  "filesScanned": 4,
+  "rulesRun": 33,
+  "counts": {
+    "critical": 0,
+    "high": 4,
+    "medium": 6,
+    "low": 0,
+    "info": 1
+  },
+  "truncated": false,
+  "unverified": 10,
+  "findings": [
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "index.ts",
+      "line": 5,
+      "evidence": "modelcontextprotocol/sdk/types.js\"; import { exec } from 'child_process'; import { promisify } from 'util'",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "index.ts",
+      "line": 273,
+      "evidence": "allowedDistro ? `wsl -d ${allowedDistro} sh -c \"${joined}\"` : `wsl sh -c \"${joined",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "index.ts",
+      "line": 274,
+      "evidence": "allowedDistro} sh -c \"${joined}\"` : `wsl sh -c \"${joined}\"`; const { stdout } = await",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "index.ts",
+      "line": 317,
+      "evidence": "const result = await execWslCommand( `sh -c \"ls -la \\\\\"${wslPath}\\\\\" | tail -n +3\"`",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "capability-mismatch",
+      "title": "Capability declaration does not match what the server serves",
+      "severity": "medium",
+      "confidence": "confirmed",
+      "why": "The capabilities block is the contract the host negotiates with. Declaring `tools: {}` and then answering `tools/list` means the client never agreed to tools, so list-change notifications go nowhere and some hosts keep a stale catalog. The reverse — advertising tools with no `tools/call` handler — gives the model a catalog it cannot invoke.",
+      "fix": "Declare what the server really serves: `capabilities: { tools: { listChanged: true } }`, and implement every tool listed.",
+      "file": "index.ts",
+      "line": 569,
+      "evidence": "\"secure-filesystem-server\", version: \"1.3.1\", }, { capabilities: { tools: {}, }, });",
+      "detail": "declared empty, tools served anyway",
+      "location": {
+        "startOffset": 17757,
+        "endOffset": 17791,
+        "startLine": 569,
+        "startColumn": 3,
+        "endLine": 571,
+        "endColumn": 4
+      }
+    },
+    {
+      "rule": "install-script",
+      "title": "Package runs code at install time",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "preinstall/install/postinstall executes before you have run anything, with your user permissions. This is the standard vector for a compromised dependency.",
+      "fix": "Read the script. Pin the version and check it has no network access.",
+      "file": "package.json",
+      "line": 16,
+      "evidence": "prepare: npm run build",
+      "detail": "executes on npm install"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "package.json",
+      "line": 20,
+      "evidence": "@modelcontextprotocol/sdk: ^1.13.2",
+      "detail": "floating range"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "package.json",
+      "line": 21,
+      "evidence": "diff: ^8.0.2",
+      "detail": "floating range"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "package.json",
+      "line": 22,
+      "evidence": "zod-to-json-schema: ^3.24.6",
+      "detail": "floating range"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "package.json",
+      "line": 25,
+      "evidence": "@types/diff: ^5.0.9",
+      "detail": "floating range"
+    },
+    {
+      "rule": "transport",
+      "title": "Uses stdio transport",
+      "severity": "info",
+      "confidence": "likely",
+      "why": "Local stdio servers inherit your user account. There is no sandbox between the server and your files.",
+      "fix": "Prefer stdio for local work and HTTP with auth for remote.",
+      "file": "index.ts",
+      "line": 3,
+      "evidence": "StdioServerTransport",
+      "detail": "StdioServerTransport"
+    }
+  ]
+}

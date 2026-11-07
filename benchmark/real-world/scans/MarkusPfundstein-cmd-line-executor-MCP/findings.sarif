@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "mcp-audit",
+          "version": "0.5.3",
+          "informationUri": "https://github.com/cheappicklecodes/mcp-audit",
+          "rules": []
+        }
+      },
+      "results": []
+    }
+  ]
+}

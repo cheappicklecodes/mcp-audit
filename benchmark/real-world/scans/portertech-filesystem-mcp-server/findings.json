@@ -1,0 +1,44 @@
+{
+  "tool": "mcp-audit",
+  "version": "0.5.3",
+  "root": "src/portertech-filesystem-mcp-server",
+  "score": 96,
+  "grade": "A",
+  "filesScanned": 38,
+  "rulesRun": 33,
+  "counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 2,
+    "info": 0
+  },
+  "truncated": false,
+  "unverified": 2,
+  "findings": [
+    {
+      "rule": "telemetry",
+      "title": "Analytics or telemetry SDK present",
+      "severity": "low",
+      "confidence": "likely",
+      "why": "Telemetry decides what leaves the machine before you have asked the tool anything.",
+      "fix": "Look for a documented off switch and confirm the endpoint.",
+      "file": "internal/security/validate.go",
+      "line": 235,
+      "evidence": "segment",
+      "detail": "segment"
+    },
+    {
+      "rule": "telemetry",
+      "title": "Analytics or telemetry SDK present",
+      "severity": "low",
+      "confidence": "likely",
+      "why": "Telemetry decides what leaves the machine before you have asked the tool anything.",
+      "fix": "Look for a documented off switch and confirm the endpoint.",
+      "file": "internal/tools/write.go",
+      "line": 158,
+      "evidence": "segment",
+      "detail": "segment"
+    }
+  ]
+}

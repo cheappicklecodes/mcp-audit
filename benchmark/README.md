@@ -13,7 +13,7 @@ npm test                     # runs the scoring as a test
 
 The same people write the fixtures and the rules. **100% means "no regression against shapes the rules were written to see", not "this finds real vulnerabilities".** The report prints that provenance above the numbers, per family, on every run, so the figure cannot be quoted without it.
 
-There is no independent corpus and no held-out split yet. Until there is, this is conformance, not accuracy.
+This corpus is conformance, not accuracy. There is still no held-out split. What it cannot tell you lives next door: [`real-world/`](real-world/README.md) is fourteen outside repositories that the rules never saw, every finding classified, with the seven misses written down.
 
 ## A case is a directory
 
@@ -115,7 +115,7 @@ This is what stops the corpus from being quietly weakened to make a bad rule loo
 
 ## What is still missing
 
-No independent cases, no held-out split. Expect misses on:
+No held-out split, and no independent author for these cases. Expect misses on:
 
 - taint through a helper the scanner does not follow
 - a clamp on a literal that is not the root it is joined to
@@ -123,4 +123,4 @@ No independent cases, no held-out split. Expect misses on:
 - anything assembled at runtime (spread capabilities, dynamic registration)
 - non-JavaScript beyond the narrow Python path rules
 
-A clean run is a floor, not a certificate.
+A clean run is a floor, not a certificate. For evidence from outside these fixtures, including the measured false-positive rate and the shapes that get past the rules, read [`real-world/README.md`](real-world/README.md).

@@ -1,0 +1,765 @@
+{
+  "evaluation": {
+    "title": "mcp-audit real-world evaluation",
+    "date": "2026-11-07",
+    "scannerVersion": "0.5.3",
+    "scannerCommit": "35e3bbb",
+    "method": "static source read only; no target installed, built or executed",
+    "rulesRun": 33,
+    "reviewer": "AI-assisted source review with automated triage; not an independent human second pass"
+  },
+  "scope": {
+    "repositoriesSelected": 14,
+    "repositoriesScanned": 14,
+    "scansFailed": 0,
+    "groupA": 7,
+    "groupB": 5,
+    "groupC": 2,
+    "groupNote": "Group B was raised from the planned 3 to 5 so that Ruby, Go and Python execution/query servers stay in the sample; the brief's '12-repository pilot' became 14 for the same reason.",
+    "sampledForRisk": true,
+    "filesInTrees": 2992,
+    "filesScanned": 1911,
+    "filesUnsupported": 1081
+  },
+  "findings": {
+    "total": 890,
+    "confirmed": 422,
+    "likely": 61,
+    "inconclusive": 225,
+    "falsePositive": 182,
+    "byKind": {
+      "weakness": 421,
+      "capability": 469
+    },
+    "weaknessOnly": {
+      "total": 421,
+      "confirmed": 93,
+      "likely": 43,
+      "inconclusive": 130,
+      "falsePositive": 155,
+      "weakness": 421,
+      "capability": 0,
+      "humanValidatedRate": 46.7,
+      "confirmedOnlyPrecision": 37.5
+    },
+    "all": {
+      "humanValidatedRate": 72.6,
+      "confirmedOnlyPrecision": 69.9
+    }
+  },
+  "denominators": {
+    "humanValidatedRate": "100 * (confirmed + likely) / (confirmed + likely + falsePositive); inconclusive rows are excluded from the denominator, not counted as either",
+    "confirmedOnlyPrecision": "100 * confirmed / (confirmed + falsePositive)",
+    "overAllFindings": 665,
+    "overWeaknessFindingsOnly": 291,
+    "recall": null,
+    "recallNote": "No independent denominator of the actual vulnerabilities in these 14 targets exists, so recall is not reported. The 7 rows in triage/missed-patterns.json are a lower bound on false negatives, found by reading, not a measured rate."
+  },
+  "measurements": {
+    "syntheticBenchmarkAccuracy": {
+      "value": "36/36 exact cases",
+      "scope": "benchmark/cases, written by the same hands as the rules",
+      "reproducible": true
+    },
+    "realWorldFindingPrecision": {
+      "value": 69.9,
+      "scope": "confirmed / (confirmed + falsePositive) over all 890 findings"
+    },
+    "verifiedRecall": {
+      "value": null,
+      "scope": "no independent denominator"
+    },
+    "humanValidatedRate": {
+      "value": 72.6,
+      "scope": "all 890 findings"
+    }
+  },
+  "byGroup": {
+    "A": {
+      "total": 37,
+      "confirmed": 25,
+      "likely": 2,
+      "inconclusive": 5,
+      "falsePositive": 5,
+      "weakness": 18,
+      "capability": 19,
+      "humanValidatedRate": 84.4,
+      "confirmedOnlyPrecision": 83.3,
+      "weaknessOnly": {
+        "total": 18,
+        "confirmed": 7,
+        "falsePositive": 5,
+        "confirmedOnlyPrecision": 58.3
+      }
+    },
+    "B": {
+      "total": 256,
+      "confirmed": 100,
+      "likely": 24,
+      "inconclusive": 80,
+      "falsePositive": 52,
+      "weakness": 105,
+      "capability": 151,
+      "humanValidatedRate": 70.5,
+      "confirmedOnlyPrecision": 65.8,
+      "weaknessOnly": {
+        "total": 105,
+        "confirmed": 13,
+        "falsePositive": 37,
+        "confirmedOnlyPrecision": 26
+      }
+    },
+    "C": {
+      "total": 597,
+      "confirmed": 297,
+      "likely": 35,
+      "inconclusive": 140,
+      "falsePositive": 125,
+      "weakness": 298,
+      "capability": 299,
+      "humanValidatedRate": 72.6,
+      "confirmedOnlyPrecision": 70.4,
+      "weaknessOnly": {
+        "total": 298,
+        "confirmed": 73,
+        "falsePositive": 113,
+        "confirmedOnlyPrecision": 39.2
+      }
+    }
+  },
+  "byRepository": {
+    "MarkusPfundstein/cmd-line-executor-MCP": {
+      "commit": "26479b913ec8b9822fad0fcb0ee59375a30c1894",
+      "group": "A",
+      "filesScanned": 3,
+      "findings": 0,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "weaknessFindings": 0,
+      "humanValidatedRate": null,
+      "confirmedOnlyPrecision": null,
+      "missedPatterns": 1,
+      "grade": "A"
+    },
+    "aj-geddes/fastfs-mcp": {
+      "commit": "bcbbc4d324e682c44ef6d644223f4de65b46394e",
+      "group": "A",
+      "filesScanned": 8,
+      "findings": 8,
+      "confirmed": 8,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "weaknessFindings": 5,
+      "humanValidatedRate": 100,
+      "confirmedOnlyPrecision": 100,
+      "missedPatterns": 1,
+      "grade": "C"
+    },
+    "blazickjp/arxiv-mcp-server": {
+      "commit": "572e301bb3198962c025d5ed5e14becb86868daa",
+      "group": "B",
+      "filesScanned": 103,
+      "findings": 45,
+      "confirmed": 10,
+      "likely": 0,
+      "inconclusive": 31,
+      "falsePositive": 4,
+      "weaknessFindings": 7,
+      "humanValidatedRate": 71.4,
+      "confirmedOnlyPrecision": 71.4,
+      "missedPatterns": 0,
+      "grade": "C"
+    },
+    "bytebase/dbhub": {
+      "commit": "0b2532b26da6e31a88d9533b6958b346bb735640",
+      "group": "B",
+      "filesScanned": 259,
+      "findings": 138,
+      "confirmed": 51,
+      "likely": 23,
+      "inconclusive": 20,
+      "falsePositive": 44,
+      "weaknessFindings": 66,
+      "humanValidatedRate": 62.7,
+      "confirmedOnlyPrecision": 53.7,
+      "missedPatterns": 0,
+      "grade": "D"
+    },
+    "executeautomation/mcp-database-server": {
+      "commit": "d6afa4be08eb05343195635fa9462746a6be3a59",
+      "group": "B",
+      "filesScanned": 32,
+      "findings": 25,
+      "confirmed": 12,
+      "likely": 1,
+      "inconclusive": 9,
+      "falsePositive": 3,
+      "weaknessFindings": 12,
+      "humanValidatedRate": 81.3,
+      "confirmedOnlyPrecision": 80,
+      "missedPatterns": 0,
+      "grade": "C"
+    },
+    "javillegasna/filesystem": {
+      "commit": "a34ef2055e9db16d3d8f2b405c3605eb80c9d942",
+      "group": "A",
+      "filesScanned": 26,
+      "findings": 0,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "weaknessFindings": 0,
+      "humanValidatedRate": null,
+      "confirmedOnlyPrecision": null,
+      "missedPatterns": 1,
+      "grade": "A"
+    },
+    "mark-oori/mcpserve": {
+      "commit": "b310fd5a2e772a41f9d9a2f32178705a315fb955",
+      "group": "A",
+      "filesScanned": 5,
+      "findings": 4,
+      "confirmed": 4,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "weaknessFindings": 1,
+      "humanValidatedRate": 100,
+      "confirmedOnlyPrecision": 100,
+      "missedPatterns": 2,
+      "grade": "B"
+    },
+    "modelcontextprotocol/python-sdk": {
+      "commit": "77001c96f9507be0f4d009b83210a384a5e08bda",
+      "group": "C",
+      "filesScanned": 938,
+      "findings": 103,
+      "confirmed": 30,
+      "likely": 6,
+      "inconclusive": 30,
+      "falsePositive": 37,
+      "weaknessFindings": 69,
+      "humanValidatedRate": 49.3,
+      "confirmedOnlyPrecision": 44.8,
+      "missedPatterns": 0,
+      "grade": "C"
+    },
+    "modelcontextprotocol/servers": {
+      "commit": "36380287ed3b15d115b55f546617d723072b1296",
+      "group": "C",
+      "filesScanned": 328,
+      "findings": 494,
+      "confirmed": 267,
+      "likely": 29,
+      "inconclusive": 110,
+      "falsePositive": 88,
+      "weaknessFindings": 229,
+      "humanValidatedRate": 77.1,
+      "confirmedOnlyPrecision": 75.2,
+      "missedPatterns": 0,
+      "grade": "F"
+    },
+    "mrdainami/ffmpeg-mcp": {
+      "commit": "e95d87ec33b31df1a46a7fe3bad211bdbac24da7",
+      "group": "A",
+      "filesScanned": 6,
+      "findings": 12,
+      "confirmed": 8,
+      "likely": 1,
+      "inconclusive": 1,
+      "falsePositive": 2,
+      "weaknessFindings": 5,
+      "humanValidatedRate": 81.8,
+      "confirmedOnlyPrecision": 80,
+      "missedPatterns": 0,
+      "grade": "C"
+    },
+    "portertech/filesystem-mcp-server": {
+      "commit": "3b3e5a05d7d2bfb107dc9e7583315976cc8bf897",
+      "group": "A",
+      "filesScanned": 38,
+      "findings": 2,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 2,
+      "weaknessFindings": 2,
+      "humanValidatedRate": 0,
+      "confirmedOnlyPrecision": 0,
+      "missedPatterns": 0,
+      "grade": "A"
+    },
+    "rira100000000/debug-mcp": {
+      "commit": "d0b90684e44eaaa269d9f5c9eaec565042647538",
+      "group": "B",
+      "filesScanned": 130,
+      "findings": 40,
+      "confirmed": 24,
+      "likely": 0,
+      "inconclusive": 16,
+      "falsePositive": 0,
+      "weaknessFindings": 15,
+      "humanValidatedRate": 100,
+      "confirmedOnlyPrecision": 100,
+      "missedPatterns": 0,
+      "grade": "C"
+    },
+    "sonirico/mcp-shell": {
+      "commit": "b358b02bcad8509353dacdeb39762801433fea42",
+      "group": "B",
+      "filesScanned": 31,
+      "findings": 8,
+      "confirmed": 3,
+      "likely": 0,
+      "inconclusive": 4,
+      "falsePositive": 1,
+      "weaknessFindings": 5,
+      "humanValidatedRate": 75,
+      "confirmedOnlyPrecision": 75,
+      "missedPatterns": 0,
+      "grade": "B"
+    },
+    "webconsulting/mcp-server-wsl-filesystem": {
+      "commit": "0f0a0bae128b068a5044b2bcccbc8040943c2353",
+      "group": "A",
+      "filesScanned": 4,
+      "findings": 11,
+      "confirmed": 5,
+      "likely": 1,
+      "inconclusive": 4,
+      "falsePositive": 1,
+      "weaknessFindings": 5,
+      "humanValidatedRate": 85.7,
+      "confirmedOnlyPrecision": 83.3,
+      "missedPatterns": 2,
+      "grade": "C"
+    }
+  },
+  "byRule": [
+    {
+      "rule": "write-capability",
+      "total": 222,
+      "confirmed": 217,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 5,
+      "kind": "capability",
+      "fpRate": 2.3,
+      "confirmedOnlyPrecision": 97.7
+    },
+    {
+      "rule": "shell-exec",
+      "total": 219,
+      "confirmed": 83,
+      "likely": 0,
+      "inconclusive": 67,
+      "falsePositive": 69,
+      "kind": "weakness",
+      "fpRate": 31.5,
+      "confirmedOnlyPrecision": 54.6
+    },
+    {
+      "rule": "outbound-network",
+      "total": 95,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 92,
+      "falsePositive": 3,
+      "kind": "capability",
+      "fpRate": 3.2,
+      "confirmedOnlyPrecision": 0
+    },
+    {
+      "rule": "telemetry",
+      "total": 61,
+      "confirmed": 4,
+      "likely": 1,
+      "inconclusive": 0,
+      "falsePositive": 56,
+      "kind": "weakness",
+      "fpRate": 91.8,
+      "confirmedOnlyPrecision": 6.7
+    },
+    {
+      "rule": "unpinned-dependency",
+      "total": 51,
+      "confirmed": 51,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "kind": "capability",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": 100
+    },
+    {
+      "rule": "path-traversal",
+      "total": 34,
+      "confirmed": 0,
+      "likely": 2,
+      "inconclusive": 32,
+      "falsePositive": 0,
+      "kind": "weakness",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": null
+    },
+    {
+      "rule": "object-merge",
+      "total": 34,
+      "confirmed": 0,
+      "likely": 32,
+      "inconclusive": 2,
+      "falsePositive": 0,
+      "kind": "weakness",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": null
+    },
+    {
+      "rule": "remote-no-auth",
+      "total": 31,
+      "confirmed": 6,
+      "likely": 0,
+      "inconclusive": 2,
+      "falsePositive": 23,
+      "kind": "weakness",
+      "fpRate": 74.2,
+      "confirmedOnlyPrecision": 20.7
+    },
+    {
+      "rule": "public-bind",
+      "total": 29,
+      "confirmed": 23,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 6,
+      "kind": "capability",
+      "fpRate": 20.7,
+      "confirmedOnlyPrecision": 79.3
+    },
+    {
+      "rule": "reads-credentials",
+      "total": 27,
+      "confirmed": 5,
+      "likely": 12,
+      "inconclusive": 0,
+      "falsePositive": 10,
+      "kind": "capability",
+      "fpRate": 37,
+      "confirmedOnlyPrecision": 33.3
+    },
+    {
+      "rule": "transport",
+      "total": 15,
+      "confirmed": 13,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 2,
+      "kind": "capability",
+      "fpRate": 13.3,
+      "confirmedOnlyPrecision": 86.7
+    },
+    {
+      "rule": "capability-mismatch",
+      "total": 14,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 14,
+      "falsePositive": 0,
+      "kind": "weakness",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": null
+    },
+    {
+      "rule": "dynamic-eval",
+      "total": 14,
+      "confirmed": 13,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 1,
+      "kind": "capability",
+      "fpRate": 7.1,
+      "confirmedOnlyPrecision": 92.9
+    },
+    {
+      "rule": "broad-fs-access",
+      "total": 13,
+      "confirmed": 0,
+      "likely": 2,
+      "inconclusive": 9,
+      "falsePositive": 2,
+      "kind": "weakness",
+      "fpRate": 15.4,
+      "confirmedOnlyPrecision": 0
+    },
+    {
+      "rule": "shell-injection",
+      "total": 6,
+      "confirmed": 0,
+      "likely": 1,
+      "inconclusive": 0,
+      "falsePositive": 5,
+      "kind": "weakness",
+      "fpRate": 83.3,
+      "confirmedOnlyPrecision": 0
+    },
+    {
+      "rule": "install-script",
+      "total": 6,
+      "confirmed": 0,
+      "likely": 6,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "kind": "capability",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": null
+    },
+    {
+      "rule": "weak-allowlist",
+      "total": 4,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 4,
+      "falsePositive": 0,
+      "kind": "weakness",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": null
+    },
+    {
+      "rule": "hidden-unicode",
+      "total": 4,
+      "confirmed": 4,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "kind": "capability",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": 100
+    },
+    {
+      "rule": "sensitive-fallback",
+      "total": 3,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 3,
+      "falsePositive": 0,
+      "kind": "capability",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": null
+    },
+    {
+      "rule": "transient-host",
+      "total": 3,
+      "confirmed": 3,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "kind": "capability",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": 100
+    },
+    {
+      "rule": "hardcoded-secret",
+      "total": 2,
+      "confirmed": 0,
+      "likely": 2,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "kind": "weakness",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": null
+    },
+    {
+      "rule": "hardcoded-credential-default",
+      "total": 2,
+      "confirmed": 0,
+      "likely": 2,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "kind": "weakness",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": null
+    },
+    {
+      "rule": "unused-allowlist",
+      "total": 1,
+      "confirmed": 0,
+      "likely": 1,
+      "inconclusive": 0,
+      "falsePositive": 0,
+      "kind": "weakness",
+      "fpRate": 0,
+      "confirmedOnlyPrecision": null
+    }
+  ],
+  "byLanguage": {
+    ".py": {
+      "total": 184,
+      "confirmed": 60,
+      "likely": 1,
+      "inconclusive": 93,
+      "falsePositive": 30
+    },
+    ".ts": {
+      "total": 321,
+      "confirmed": 143,
+      "likely": 45,
+      "inconclusive": 59,
+      "falsePositive": 74
+    },
+    ".tsx": {
+      "total": 2,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 2
+    },
+    ".mjs": {
+      "total": 251,
+      "confirmed": 138,
+      "likely": 4,
+      "inconclusive": 52,
+      "falsePositive": 57
+    },
+    ".json": {
+      "total": 65,
+      "confirmed": 45,
+      "likely": 6,
+      "inconclusive": 0,
+      "falsePositive": 14
+    },
+    ".js": {
+      "total": 5,
+      "confirmed": 2,
+      "likely": 2,
+      "inconclusive": 1,
+      "falsePositive": 0
+    },
+    ".txt": {
+      "total": 7,
+      "confirmed": 7,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 0
+    },
+    ".yml": {
+      "total": 5,
+      "confirmed": 1,
+      "likely": 2,
+      "inconclusive": 0,
+      "falsePositive": 2
+    },
+    ".toml": {
+      "total": 1,
+      "confirmed": 0,
+      "likely": 1,
+      "inconclusive": 0,
+      "falsePositive": 0
+    },
+    "(no ext)": {
+      "total": 2,
+      "confirmed": 2,
+      "likely": 0,
+      "inconclusive": 0,
+      "falsePositive": 0
+    },
+    ".go": {
+      "total": 9,
+      "confirmed": 2,
+      "likely": 0,
+      "inconclusive": 4,
+      "falsePositive": 3
+    },
+    ".rb": {
+      "total": 38,
+      "confirmed": 22,
+      "likely": 0,
+      "inconclusive": 16,
+      "falsePositive": 0
+    }
+  },
+  "severity": {
+    "high": {
+      "total": 330,
+      "confirmed": 93,
+      "likely": 18,
+      "inconclusive": 114,
+      "falsePositive": 105
+    },
+    "medium": {
+      "total": 464,
+      "confirmed": 311,
+      "likely": 41,
+      "inconclusive": 97,
+      "falsePositive": 15
+    },
+    "low": {
+      "total": 64,
+      "confirmed": 4,
+      "likely": 1,
+      "inconclusive": 3,
+      "falsePositive": 56
+    },
+    "critical": {
+      "total": 6,
+      "confirmed": 1,
+      "likely": 1,
+      "inconclusive": 0,
+      "falsePositive": 4
+    },
+    "info": {
+      "total": 26,
+      "confirmed": 13,
+      "likely": 0,
+      "inconclusive": 11,
+      "falsePositive": 2
+    }
+  },
+  "confidence": {
+    "likely": {
+      "total": 876,
+      "confirmed": 422,
+      "likely": 61,
+      "inconclusive": 211,
+      "falsePositive": 182
+    },
+    "inconclusive": {
+      "total": 11,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 11,
+      "falsePositive": 0
+    },
+    "confirmed": {
+      "total": 3,
+      "confirmed": 0,
+      "likely": 0,
+      "inconclusive": 3,
+      "falsePositive": 0
+    }
+  },
+  "missedPatterns": {
+    "total": 7,
+    "inScope": 6,
+    "outOfScope": 1,
+    "confirmedSink": 7,
+    "probableSink": 0
+  },
+  "repositoriesWithoutFindings": [
+    "MarkusPfundstein/cmd-line-executor-MCP",
+    "javillegasna/filesystem"
+  ],
+  "repositoriesWithoutWeaknessFindings": [
+    "MarkusPfundstein/cmd-line-executor-MCP",
+    "javillegasna/filesystem"
+  ],
+  "coverageLimits": [
+    "14 repositories is a small sample and was chosen for shape and language variety, not by random sampling.",
+    "Group A was selected to contain command and filesystem servers, so it is risk-enriched and its precision figure is not an ecosystem estimate.",
+    "Two of the fourteen targets contributed 597 of 890 findings (67%); per-rule rates are dominated by modelcontextprotocol/servers and bytebase/dbhub.",
+    "Group C contains SDK and reference code, not only runnable servers, so its findings skew toward library shapes.",
+    "Findings were produced by one scanner version on one day; there is no second-run stability study."
+  ]
+}

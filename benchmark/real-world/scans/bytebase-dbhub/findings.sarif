@@ -1,0 +1,3382 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "mcp-audit",
+          "version": "0.5.3",
+          "informationUri": "https://github.com/cheappicklecodes/mcp-audit",
+          "rules": [
+            {
+              "id": "shell-injection",
+              "name": "Caller-controlled string reaches a shell",
+              "shortDescription": {
+                "text": "Caller-controlled string reaches a shell"
+              },
+              "fullDescription": {
+                "text": "The shell parses the string, so everything in it is syntax: `;`, `&&`, `$()` and backticks all run. When the caller writes that string, the caller is writing code, and the tool description is the only boundary."
+              },
+              "help": {
+                "text": "Either validate against an allowlist that matches the whole command and fails closed, or move to `execFile` with an argv array so nothing is parsed."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "broad-fs-access",
+              "name": "Server can reach the whole filesystem or home directory",
+              "shortDescription": {
+                "text": "Server can reach the whole filesystem or home directory"
+              },
+              "fullDescription": {
+                "text": "A server scoped to a project can be compromised for the cost of the project. One scoped to `~` or `/` can read every repo, key and note on the machine — including files it never advertised."
+              },
+              "help": {
+                "text": "Scope roots to the directories the server actually serves."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "shell-exec",
+              "name": "Executes shell commands",
+              "shortDescription": {
+                "text": "Executes shell commands"
+              },
+              "fullDescription": {
+                "text": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary."
+              },
+              "help": {
+                "text": "Use an allowlist, avoid `shell: true`, and quote interpolated values."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "path-traversal",
+              "name": "Joins caller-supplied paths without a containment check",
+              "shortDescription": {
+                "text": "Joins caller-supplied paths without a containment check"
+              },
+              "fullDescription": {
+                "text": "`path.join(ROOT, args.path)` looks confined but is not: `../../etc/passwd` walks straight out of ROOT, and an absolute segment discards the prefix entirely. The model writes that string, and so does anything else that can call the tool."
+              },
+              "help": {
+                "text": "Resolve, then compare with a separator: `const p = path.resolve(ROOT, input); if (!p.startsWith(ROOT + path.sep)) throw`. On Windows use `path.relative` and reject a leading `..`."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "reads-credentials",
+              "name": "Reads credential or key material",
+              "shortDescription": {
+                "text": "Reads credential or key material"
+              },
+              "fullDescription": {
+                "text": "Reading your private keys and cloud config means a bug in this server is a bug in everything you are logged into. Most servers need one secret and touch ten."
+              },
+              "help": {
+                "text": "Pass the single secret the server needs instead of letting it crawl config directories."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "hardcoded-secret",
+              "name": "Credential appears as a literal",
+              "shortDescription": {
+                "text": "Credential appears as a literal"
+              },
+              "fullDescription": {
+                "text": "A committed key is shared with everyone who reads the repo and never rotates itself."
+              },
+              "help": {
+                "text": "Rotate it at the provider — assume it is already public — then read it from an env var or `.env` that is gitignored. Deleting the line is not enough; the value lives on in history."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "remote-no-auth",
+              "name": "HTTP server bound without obvious auth",
+              "shortDescription": {
+                "text": "HTTP server bound without obvious auth"
+              },
+              "fullDescription": {
+                "text": "An MCP server speaking HTTP with tools attached and no token check is an unauthenticated API into your filesystem or accounts for anything on the network."
+              },
+              "help": {
+                "text": "Require a bearer token; bind to localhost when the server is local-only."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "unpinned-dependency",
+              "name": "Dependency ranges that can float",
+              "shortDescription": {
+                "text": "Dependency ranges that can float"
+              },
+              "fullDescription": {
+                "text": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust."
+              },
+              "help": {
+                "text": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "write-capability",
+              "name": "Can write or mutate files and state",
+              "shortDescription": {
+                "text": "Can write or mutate files and state"
+              },
+              "fullDescription": {
+                "text": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible."
+              },
+              "help": {
+                "text": "Confine write roots, and prefer explicit overwrite semantics over silent replace."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "outbound-network",
+              "name": "Makes outbound network calls",
+              "shortDescription": {
+                "text": "Makes outbound network calls"
+              },
+              "fullDescription": {
+                "text": "An MCP server with data access and an outbound socket can ship that data anywhere. Worth knowing which endpoints, and whether a local-first tool is quietly phoning home."
+              },
+              "help": {
+                "text": "Confirm the endpoint. For privacy-sensitive servers prefer opt-out telemetry or none."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "object-merge",
+              "name": "Merges caller-supplied objects",
+              "shortDescription": {
+                "text": "Merges caller-supplied objects"
+              },
+              "fullDescription": {
+                "text": "Naive `Object.assign`/spread merging lets `__proto__` in tool arguments reach the prototype chain."
+              },
+              "help": {
+                "text": "Filter `__proto__`, or use a merge that blocks it."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "public-bind",
+              "name": "Listens on all interfaces",
+              "shortDescription": {
+                "text": "Listens on all interfaces"
+              },
+              "fullDescription": {
+                "text": "`0.0.0.0` exposes the port to the LAN and any container network, not just this machine."
+              },
+              "help": {
+                "text": "Bind `127.0.0.1` unless remote access is the point."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "unused-allowlist",
+              "name": "Allowlist is declared but never applied",
+              "shortDescription": {
+                "text": "Allowlist is declared but never applied"
+              },
+              "fullDescription": {
+                "text": "A control nothing calls is decoration. It reads as \"there is a whitelist\" so a reviewer stops looking, while every command runs unvalidated — the worst of both, because it is trusted and inert."
+              },
+              "help": {
+                "text": "Apply it immediately before exec, and treat a miss as a rejection rather than a warning."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "telemetry",
+              "name": "Analytics or telemetry SDK present",
+              "shortDescription": {
+                "text": "Analytics or telemetry SDK present"
+              },
+              "fullDescription": {
+                "text": "Telemetry decides what leaves the machine before you have asked the tool anything."
+              },
+              "help": {
+                "text": "Look for a documented off switch and confirm the endpoint."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            },
+            {
+              "id": "sensitive-fallback",
+              "name": "Falls back to a sensitive config file",
+              "shortDescription": {
+                "text": "Falls back to a sensitive config file"
+              },
+              "fullDescription": {
+                "text": "Configs like `.npmrc` hold publish tokens; silently reading them widens the blast radius beyond MCP."
+              },
+              "help": {
+                "text": "Document which config file is read and consider a dedicated credential."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "shell-injection",
+          "level": "error",
+          "message": {
+            "text": "Caller-controlled string reaches a shell — firstWord === \"explain\") { const m = explainAnalyzePattern.exec(cleanedSQL); if (m) { const afterExplain"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "string executed by stdio, ungated"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/allowed-keywords.ts"
+                },
+                "region": {
+                  "startLine": 342
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "broad-fs-access",
+          "level": "error",
+          "message": {
+            "text": "Server can reach the whole filesystem or home directory — path: /"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "broad root"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "frontend/src/App.tsx"
+                },
+                "region": {
+                  "startLine": 38
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "broad-fs-access",
+          "level": "error",
+          "message": {
+            "text": "Server can reach the whole filesystem or home directory — path: /"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "broad root"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "frontend/src/components/ui/sidebar.tsx"
+                },
+                "region": {
+                  "startLine": 90
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — from \"node:fs\"; import { spawnSync } from \"node:child_process\"; import { join } from \"node:path\""
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/build-mcpb.mjs"
+                },
+                "region": {
+                  "startLine": 21
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — command, args, opts = {}) { const result = spawnSync(command, args, { stdio: \"inherit\", ...opts"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/build-mcpb.mjs"
+                },
+                "region": {
+                  "startLine": 42
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — run test:mcpb import { spawnSync } from \"node:child_process\"; import { existsSync, mkdtempSync"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/smoke-test-mcpb.mjs"
+                },
+                "region": {
+                  "startLine": 19
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — recursive: true, force: true })); const unpack = spawnSync(localBin(\"mcpb\"), [\"unpack\", mcpbFile"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/smoke-test-mcpb.mjs"
+                },
+                "region": {
+                  "startLine": 35
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "path-traversal",
+          "level": "error",
+          "message": {
+            "text": "Joins caller-supplied paths without a containment check — const readJson = (relPath) => JSON.parse(fs.readFileSync(path.join(repoRoot, relPath), \"utf-8\")); const version"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "root is joined to caller input, never clamped"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/sync-version.mjs"
+                },
+                "region": {
+                  "startLine": 17
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "path-traversal",
+          "level": "error",
+          "message": {
+            "text": "Joins caller-supplied paths without a containment check — writeJsonIfChanged(relPath, mutate) { const filePath = path.join(repoRoot, relPath); const original = fs.readFileSync"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "root is joined to caller input, never clamped"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/sync-version.mjs"
+                },
+                "region": {
+                  "startLine": 22
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — 'vitest'; import { spawn, ChildProcess } from 'child_process'; import fs from 'fs'; import path"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/http-bind-host.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — process.cwd(), 'src', 'index.ts'); serverProcess = spawn(process.execPath, [tsxCli, entry, '--transport"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/http-bind-host.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 30
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — 'vitest'; import { spawn, ChildProcess } from 'child_process'; import fs from 'fs'; import path"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/json-rpc-integration.test.ts"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — server as a child process serverProcess = spawn(process.execPath, [tsxCli, entry, '--transport"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/json-rpc-integration.test.ts"
+                },
+                "region": {
+                  "startLine": 37
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "path-traversal",
+          "level": "error",
+          "message": {
+            "text": "Joins caller-supplied paths without a containment check — relPath: string): any { return JSON.parse(fs.readFileSync(path.join(repoRoot, relPath), \"utf-8\")); } function tomlBody"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "root is joined to caller input, never clamped"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/plugin-consistency.test.ts"
+                },
+                "region": {
+                  "startLine": 16
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "path-traversal",
+          "level": "error",
+          "message": {
+            "text": "Joins caller-supplied paths without a containment check — relPath: string): string { return fs .readFileSync(path.join(repoRoot, relPath), \"utf-8\") .split(\"\\n\")"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "root is joined to caller input, never clamped"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/plugin-consistency.test.ts"
+                },
+                "region": {
+                  "startLine": 21
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — const cwd = process.cwd(); fs.writeFileSync(path.join(dir, '.env'), 'DSN_FROM_ENV_FILE=sqlite:"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "path.join(dir, '.env"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/env.test.ts"
+                },
+                "region": {
+                  "startLine": 401
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — 'ubuntu', port: 2222, privateKey: '/home/user/.ssh/id_rsa' })); // Simulate command"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/ssh-config-integration.test.ts"
+                },
+                "region": {
+                  "startLine": 54
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — \"bastion.example.com\" ssh_user = \"ubuntu\" ssh_key = \"~/.ssh/id_rsa\" ssh_key_discovered = true `); expect"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/toml-loader.test.ts"
+                },
+                "region": {
+                  "startLine": 306
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "path-traversal",
+          "level": "error",
+          "message": {
+            "text": "Joins caller-supplied paths without a containment check — `.dbhub-test-${process.pid}-${Date.now()}`; const absDir = path.join(os.homedir(), relDir); fs.mkdirSync(absDir"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "root is joined to caller input, never clamped"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/toml-loader.test.ts"
+                },
+                "region": {
+                  "startLine": 904
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "path-traversal",
+          "level": "error",
+          "message": {
+            "text": "Joins caller-supplied paths without a containment check — loadSqlFile(fileName: string): string { const filePath = path.join(DEMO_DATA_DIR, fileName); return fs.readFileSync"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "root is joined to caller input, never clamped"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/demo-loader.ts"
+                },
+                "region": {
+                  "startLine": 45
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — g; let match; while ((match = readRegex.exec(sql)) !== null) { const includePath"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/demo-loader.ts"
+                },
+                "region": {
+                  "startLine": 68
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — environment const envFileNames = isDevelopment ? [\".env.local\", \".env\"] // In development, try .env.local"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "\".env.local\""
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/env.ts"
+                },
+                "region": {
+                  "startLine": 86
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — Try to parse SSH config for this host, default to ~/.ssh/config const sshConfigPath = getDefaultSSHConfigPath"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/env.ts"
+                },
+                "region": {
+                  "startLine": 577
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — sqlite (not mocked): the handle opens fine, then exec() throws. const { SQLiteConnector }"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/connect-failure-cleanup.test.ts"
+                },
+                "region": {
+                  "startLine": 143
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "path-traversal",
+          "level": "error",
+          "message": {
+            "text": "Joins caller-supplied paths without a containment check — string, name: string, pem: string): string { const file = path.join(dir, name); fs.writeFileSync(file, pem); return"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "root is joined to caller input, never clamped"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/dsn-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 14
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "hardcoded-secret",
+          "level": "error",
+          "message": {
+            "text": "Credential appears as a literal — AKIAIOSFODNN7E…"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "AWS access key id"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/dsn-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 388
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "hardcoded-secret",
+          "level": "error",
+          "message": {
+            "text": "Credential appears as a literal — AKIAIOSFODNN7E…"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "AWS access key id"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/dsn-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 424
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — vi.restoreAllMocks(); }); it(\"should resolve an alias from ~/.ssh/config and let explicit TOML fields override its"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/manager.test.ts"
+                },
+                "region": {
+                  "startLine": 55
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — username: \"ubuntu\", privateKey: \"/home/user/.ssh/id_rsa\", }); const manager = new ConnectorManager"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "id_rsa"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/manager.test.ts"
+                },
+                "region": {
+                  "startLine": 61
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "remote-no-auth",
+          "level": "error",
+          "message": {
+            "text": "HTTP server bound without obvious auth — const connectors: PostgresConnector[] = []; const server = createServer(socket => { sockets.add(socket); socket.on(\"c…"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "no auth reference in file"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/postgres-auth.test.ts"
+                },
+                "region": {
+                  "startLine": 17
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — from 'vitest'; import { execFileSync } from 'child_process'; import fs from 'fs'; import os"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/postgres-client-cert.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "path-traversal",
+          "level": "error",
+          "message": {
+            "text": "Joins caller-supplied paths without a containment check — .map(([key, file]) => `${key}=${encodeURIComponent(path.join(certDir, file))}`) .join('&'); beforeAll"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "root is joined to caller input, never clamped"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/postgres-client-cert.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 87
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "remote-no-auth",
+          "level": "error",
+          "message": {
+            "text": "HTTP server bound without obvious auth — sockets = new Set<Socket>(); let connections = 0; const server = createServer(socket => { connections++; sockets.add(…"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "no auth reference in file"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/postgres-connection-loss.test.ts"
+                },
+                "region": {
+                  "startLine": 19
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — 2222; sourceConfig.ssh_key = '/home/user/.ssh/id_rsa'; // This should fail during SSH"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/postgres-ssh.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 104
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — ssh_host looks like an SSH config alias, resolve from ~/.ssh/config let resolvedSSHConfig: SSHTunnelConfig"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/manager.ts"
+                },
+                "region": {
+                  "startLine": 159
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — boundary.lastIndex = i; i += boundary.exec(blanked)![0].length; if (i >= blanked.length"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/oracle/index.ts"
+                },
+                "region": {
+                  "startLine": 872
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — plainEnd.lastIndex = i; const m = plainEnd.exec(blanked); const end = m?.index ?"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/oracle/index.ts"
+                },
+                "region": {
+                  "startLine": 880
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — RegExpExecArray | null; while ((m = token.exec(blanked)) !== null) { if (m[0] ="
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/oracle/index.ts"
+                },
+                "region": {
+                  "startLine": 894
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — run it if (initScript) { this.db.exec(initScript); } } catch (error)"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/sqlite/index.ts"
+                },
+                "region": {
+                  "startLine": 227
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — rollback first try { this.db.exec('ROLLBACK'); } catch (rollbackError"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/sqlite/index.ts"
+                },
+                "region": {
+                  "startLine": 255
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — it. if (options.readonly) { this.db.exec(\"PRAGMA query_only = ON\"); } try"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/sqlite/index.ts"
+                },
+                "region": {
+                  "startLine": 519
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — if (options.readonly) { this.db.exec(\"PRAGMA query_only = ON\"); }"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/sqlite/index.ts"
+                },
+                "region": {
+                  "startLine": 579
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — continue; const parsed = EXPLAIN_OPTION.exec(token); if (!parsed) { throw"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/sqlserver/explain.ts"
+                },
+                "region": {
+                  "startLine": 136
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — statement> const analyzeKeyword = /^analyze\\b/i.exec(afterExplain); if (!analyzeKeyword) {"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/sqlserver/explain.ts"
+                },
+                "region": {
+                  "startLine": 164
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — executes. const disabled = EXPLAIN_BARE_DISABLED.exec(rest); if (disabled) { return { analyze"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/sqlserver/explain.ts"
+                },
+                "region": {
+                  "startLine": 177
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — }; } const trailing = /^([A-Za-z_]+)\\b/.exec(rest); if (trailing && /^verbose$/i.test"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/sqlserver/explain.ts"
+                },
+                "region": {
+                  "startLine": 182
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "remote-no-auth",
+          "level": "error",
+          "message": {
+            "text": "HTTP server bound without obvious auth — schema per tool config, cached by config object identity. * createServer() runs per HTTP request, and both registrati…"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "no auth reference in file"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/tools/custom-tool-handler.ts"
+                },
+                "region": {
+                  "startLine": 89
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "remote-no-auth",
+          "level": "error",
+          "message": {
+            "text": "HTTP server bound without obvious auth — the wrapped object is built once at // module scope because createServer() runs per HTTP request and registration // …"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "no auth reference in file"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/tools/execute-sql.ts"
+                },
+                "region": {
+                  "startLine": 17
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "remote-no-auth",
+          "level": "error",
+          "message": {
+            "text": "HTTP server bound without obvious auth — .describe(\"Max results\"), }; // Wrapped once at module scope: createServer() runs per HTTP request and // registratio…"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "no auth reference in file"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/tools/search-objects.ts"
+                },
+                "region": {
+                  "startLine": 56
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — TOML option: set when `ssh_key` was picked up from `~/.ssh/config` * while resolving `--ssh-host`, so"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/types/config.ts"
+                },
+                "region": {
+                  "startLine": 18
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — * True when `privateKey` was picked up from `~/.ssh/config` (an `IdentityFile` or a * default key"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/types/ssh.ts"
+                },
+                "region": {
+                  "startLine": 25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — 'bastion.example.com', username: 'ubuntu', privateKey: '/home/user/.ssh/id_rsa' }; expect(obfuscateSSHConfig(config"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/dsn-obfuscate.test.ts"
+                },
+                "region": {
+                  "startLine": 111
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "remote-no-auth",
+          "level": "error",
+          "message": {
+            "text": "HTTP server bound without obvious auth — idle timeout (issue #472)\", () => { const server = http.createServer(); expect(server.keepAliveTimeout).toBe(5_000"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "no auth reference in file"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/http-keep-alive.test.ts"
+                },
+                "region": {
+                  "startLine": 11
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — this file: parseSSHConfig falls back to scanning ~/.ssh/id_* // when a host has no IdentityFile, so with"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/ssh-config-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — () => { const identityPath = join(tempDir, 'id_rsa'); writeFileSync(identityPath, 'fake-key-content'"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "id_rsa"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/ssh-config-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 92
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — 'id_rsa'); const identityPath2 = join(tempDir, 'id_ed25519'); writeFileSync(identityPath1, 'fake-key-1'"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "id_ed25519"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/ssh-config-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 116
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — ])('should skip an undecryptable key from ~/.ssh/config and use %s', async (_method, fallback)"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/ssh-tunnel.test.ts"
+                },
+                "region": {
+                  "startLine": 271
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — async () => { // e.g. `IdentityFile ~/.ssh/id_ed25519.pub`, which 1Password uses to pick an agent"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "id_ed25519"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/ssh-tunnel.test.ts"
+                },
+                "region": {
+                  "startLine": 303
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — \"explain\") { const m = explainAnalyzePattern.exec(cleanedSQL); if (m) { const afterExplain"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/allowed-keywords.ts"
+                },
+                "region": {
+                  "startLine": 342
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — `ignoreCache: true`. The SDK caches the * contents of `~/.aws/credentials` and `~/.aws/config` in a module-level"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".aws/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/aws-rds-signer.ts"
+                },
+                "region": {
+                  "startLine": 17
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — \"tx_read_only\"; } const match = /^(\\d+)\\.(\\d+)\\.(\\d+)/.exec(version); if (match) { const [major"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/readonly-transaction.ts"
+                },
+                "region": {
+                  "startLine": 77
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-injection",
+          "level": "error",
+          "message": {
+            "text": "Caller-controlled string reaches a shell — \"tx_read_only\"; } const match = /^(\\d+)\\.(\\d+)\\.(\\d+)/.exec(version); if (match) { const [major, minor, patch"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "validated, but nothing stops execution on a miss"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/readonly-transaction.ts"
+                },
+                "region": {
+                  "startLine": 77
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — const ipv6Host = /^\\[([^\\]]+)\\](?::(.*))?$/.exec(urlString); if (!ipv6Host) {"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/safe-url.ts"
+                },
+                "region": {
+                  "startLine": 135
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — sql.substring(i); const m = dollarQuoteOpenRegex.exec(remaining); if (!m) { return null; }"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/sql-parser.ts"
+                },
+                "region": {
+                  "startLine": 110
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — const firstKeyword = /^[(;\\s]*([a-z_]+)/.exec(blankedSQL)?.[1] ?? \"\"; if (firstKeyword"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/sql-row-limiter.ts"
+                },
+                "region": {
+                  "startLine": 64
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — RegExpExecArray | null; while ((m = regex.exec(blankedSQL)) !== null) { const token"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/sql-row-limiter.ts"
+                },
+                "region": {
+                  "startLine": 146
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — operand.lastIndex = end; const operandMatch = operand.exec(blanked); if (operandMatch === null)"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/sql-row-limiter.ts"
+                },
+                "region": {
+                  "startLine": 222
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — end, close); literal = /^\\s*(\\d+)\\s*$/.exec(inner)?.[1]; end = close + 1;"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/sql-row-limiter.ts"
+                },
+                "region": {
+                  "startLine": 236
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — IdentityFile is specified */ const DEFAULT_SSH_KEYS = [ '~/.ssh/id_rsa', '~/.ssh/id_ed25519', '~/.ssh/id_ecdsa'"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/ssh-config-parser.ts"
+                },
+                "region": {
+                  "startLine": 22
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — DEFAULT_SSH_KEYS = [ '~/.ssh/id_rsa', '~/.ssh/id_ed25519', '~/.ssh/id_ecdsa', '~/.ssh/id_dsa'"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "id_ed25519"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/ssh-config-parser.ts"
+                },
+                "region": {
+                  "startLine": 23
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "reads-credentials",
+          "level": "error",
+          "message": {
+            "text": "Reads credential or key material — passphrase?: string; /** The key came from ~/.ssh/config rather than explicit DBHub configuration"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": ".ssh/"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/ssh-tunnel.ts"
+                },
+                "region": {
+                  "startLine": 15
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "remote-no-auth",
+          "level": "error",
+          "message": {
+            "text": "HTTP server bound without obvious auth — let settled = false; this.localServer = createServer((localSocket) => { sshClient.forwardOut"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "no auth reference in file"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/ssh-tunnel.ts"
+                },
+                "region": {
+                  "startLine": 350
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @base-ui/react: ^1.0.0"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "frontend/package.json"
+                },
+                "region": {
+                  "startLine": 12
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @codemirror/commands: ^6.10.1"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "frontend/package.json"
+                },
+                "region": {
+                  "startLine": 13
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @codemirror/lang-sql: ^6.10.0"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "frontend/package.json"
+                },
+                "region": {
+                  "startLine": 14
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @codemirror/state: ^6.5.3"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "frontend/package.json"
+                },
+                "region": {
+                  "startLine": 15
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @iarna/toml: ^2.2.5"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 48
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @modelcontextprotocol/node: ^2.0.0"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 49
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @modelcontextprotocol/server: ^2.0.0"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 50
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — dotenv: ^16.4.7"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 51
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from \"node"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/build-mcpb.mjs"
+                },
+                "region": {
+                  "startLine": 20
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — Bundle for dbhub@${bundleVersion} ...`); rmSync(join(root, \"dist-mcpb\"), { recursive"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/build-mcpb.mjs"
+                },
+                "region": {
+                  "startLine": 57
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — child_process\"; import { existsSync, mkdtempSync, rmSync } from \"node:fs\"; import { tmpdir"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/smoke-test-mcpb.mjs"
+                },
+                "region": {
+                  "startLine": 20
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — \"dbhub-mcpb-smoke-\")); process.on(\"exit\", () => rmSync(bundleDir, { recursive: true, force"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/smoke-test-mcpb.mjs"
+                },
+                "region": {
+                  "startLine": 33
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — n\"; if (updated !== original) { fs.writeFileSync(filePath, updated); console.log"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/sync-version.mjs"
+                },
+                "region": {
+                  "startLine": 30
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "outbound-network",
+          "level": "warning",
+          "message": {
+            "text": "Makes outbound network calls — ${testHost}:${testPort}"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "${testHost}:${testPort}"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/http-bind-host.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 54
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — & fs.existsSync(testDbPath)) { fs.unlinkSync(testDbPath); } if (isolatedCwd"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/http-bind-host.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 87
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — fs.existsSync(isolatedCwd)) { fs.rmSync(isolatedCwd, { recursive: true, force"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/http-bind-host.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 90
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "outbound-network",
+          "level": "warning",
+          "message": {
+            "text": "Makes outbound network calls — ${testHost}:${testPort}"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "${testHost}:${testPort}"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/http-bind-host.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 95
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — & fs.existsSync(testDbPath)) { fs.unlinkSync(testDbPath); } // Clean"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/json-rpc-integration.test.ts"
+                },
+                "region": {
+                  "startLine": 148
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — fs.existsSync(isolatedCwd)) { fs.rmSync(isolatedCwd, { recursive: true, force"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/__tests__/json-rpc-integration.test.ts"
+                },
+                "region": {
+                  "startLine": 153
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — (type, protocol, port) => { Object.assign(process.env, baseEnv, { DB_TYPE"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/env.test.ts"
+                },
+                "region": {
+                  "startLine": 81
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — custom port when provided', () => { Object.assign(process.env, baseEnv, { DB_PORT"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/env.test.ts"
+                },
+                "region": {
+                  "startLine": 93
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — 'resolveHost', () => { const DEFAULT = { host: '0.0.0.0', source: 'default' };"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/env.test.ts"
+                },
+                "region": {
+                  "startLine": 263
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — }); it.each([ ['defaults to 0.0.0.0 when nothing is set', {}, [], DEFAULT"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/env.test.ts"
+                },
+                "region": {
+                  "startLine": 273
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — process.chdir(originalCwd); fs.rmSync(tempDir, { recursive: true, force"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/env.test.ts"
+                },
+                "region": {
+                  "startLine": 372
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — const cwd = process.cwd(); fs.writeFileSync(path.join(dir, '.env'), 'DSN_FROM_ENV_FILE"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/env.test.ts"
+                },
+                "region": {
+                  "startLine": 401
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — process.env.DSN_FROM_ENV_FILE; fs.rmSync(dir, { recursive: true, force: true"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/env.test.ts"
+                },
+                "region": {
+                  "startLine": 426
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — process.chdir(originalCwd); try { fs.rmSync(tempDir, { recursive: true, force"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/toml-loader.test.ts"
+                },
+                "region": {
+                  "startLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — ReturnType<typeof loadTomlConfig> => { fs.writeFileSync(path.join(tempDir, 'dbhub.toml'"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/toml-loader.test.ts"
+                },
+                "region": {
+                  "startLine": 39
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — string, type = 'postgres'): void => { fs.writeFileSync(path.join(tempDir, 'dbhub.toml'"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/__tests__/toml-loader.test.ts"
+                },
+                "region": {
+                  "startLine": 66
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — environment variables. * Returns the host with \"0.0.0.0\" as the default (listen on all interfaces"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/env.ts"
+                },
+                "region": {
+                  "startLine": 404
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — applicable when using --transport=http. Default \"0.0.0.0\" keeps * backward compatibility"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/config/env.ts"
+                },
+                "region": {
+                  "startLine": 406
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — connected/i); } finally { await fs.promises.rm(dbPath, { force: true });"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/connect-failure-cleanup.test.ts"
+                },
+                "region": {
+                  "startLine": 157
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — const file = path.join(dir, name); fs.writeFileSync(file, pem); return file;"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/dsn-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 15
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — CA); }); afterEach(() => { fs.rmSync(tempDir, { recursive: true, force"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/dsn-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 45
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — KEY); }); afterEach(() => { fs.rmSync(tempDir, { recursive: true, force"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/dsn-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 151
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — ] = []; release = vi.fn(); client = Object.assign(new EventEmitter(), { processID"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/duplicate-column-names.test.ts"
+                },
+                "region": {
+                  "startLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — . connect = vi.fn().mockResolvedValue(Object.assign(new EventEmitter(), { release"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/pool-error-listener.test.ts"
+                },
+                "region": {
+                  "startLine": 22
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — container?.stop(); if (certDir) { fs.rmSync(certDir, { recursive: true, force"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/postgres-client-cert.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 112
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — await connector.connect(dsn); fs.rmSync(keyPath); const outcomes ="
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/postgres-client-cert.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 203
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — EventEmitter, like pg.Client. client = Object.assign(new EventEmitter(), { processID"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/postgres-query-timeout.test.ts"
+                },
+                "region": {
+                  "startLine": 30
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — cancellation\", async () => { const cancelled = Object.assign(new Error(\"canceling statement"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/postgres-query-timeout.test.ts"
+                },
+                "region": {
+                  "startLine": 123
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — async () => { const timeoutError = Object.assign(new Error(\"Query inactivity"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/readonly-transaction-strategy.test.ts"
+                },
+                "region": {
+                  "startLine": 276
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — => setTimeout(resolve, 10)); fs.unlinkSync(this.dbPath); } catch (error"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/sqlite.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 22
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — setTimeout(resolve, 10)); fs.unlinkSync(dbPath); } catch (error"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/sqlite.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 539
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — setTimeout(resolve, 10)); fs.unlinkSync(fullPath); } catch"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/sqlite.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 574
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — poolConfig.ssl is an object here Object.assign(poolConfig.ssl as object,"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/postgres/index.ts"
+                },
+                "region": {
+                  "startLine": 170
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — paths are configured (see parse()). Object.assign(this.ssl as unknown as object"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/postgres/ssl-pems.ts"
+                },
+                "region": {
+                  "startLine": 146
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — process.exit(1); }); httpServer.listen(port!, host!, () => { const"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/server.ts"
+                },
+                "region": {
+                  "startLine": 339
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — : boundHost; // Wildcard binds (0.0.0.0 / ::) are not routable; use localhost"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/server.ts"
+                },
+                "region": {
+                  "startLine": 344
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unused-allowlist",
+          "level": "warning",
+          "message": {
+            "text": "Allowlist is declared but never applied — export const ALL_BUILTIN_TOOL_NAMES = [ ...BUILTIN_TOOLS, BUILTIN_TOOL_EXPLAIN_SQL"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "ALL_BUILTIN_TOOL_NAMES is defined and never referenced"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/tools/builtin-tools.ts"
+                },
+                "region": {
+                  "startLine": 22
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — import { mkdtemp, rm, writeFile } from \"node:fs/promises\"; import"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/aws-rds-credentials.test.ts"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — credentials file\", async () => { await writeFile(join(dir, \"config\"), \"\"); for"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/aws-rds-credentials.test.ts"
+                },
+                "region": {
+                  "startLine": 31
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — of [\"FILEKEY1\", \"FILEKEY2\"]) { await writeFile(credentials, `[default]\\naws_access_key_id"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/aws-rds-credentials.test.ts"
+                },
+                "region": {
+                  "startLine": 33
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — const loopback = buildAllowedHosts([], '0.0.0.0'); describe('buildAllowedHosts'"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/cross-origin.test.ts"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — const hosts = buildAllowedHosts([], '0.0.0.0'); expect(hosts.has('localhost'"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/cross-origin.test.ts"
+                },
+                "region": {
+                  "startLine": 10
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — \"isClientSideTimeout\", () => { it.each([ [\"mysql2\", Object.assign(new Error(\"Query inactivity"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/query-timeout.test.ts"
+                },
+                "region": {
+                  "startLine": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "object-merge",
+          "level": "warning",
+          "message": {
+            "text": "Merges caller-supplied objects — PostgreSQL statement_timeout cancellation\", Object.assign(new Error(\"canceling statement"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/query-timeout.test.ts"
+                },
+                "region": {
+                  "startLine": 42
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — ssh-config-parser.js'; import { mkdtempSync, writeFileSync, rmSync, symlinkSync, mkdirSync"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/ssh-config-parser.test.ts"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — generateKeyPairSync } from 'crypto'; import { mkdtempSync, rmSync, writeFileSync } from 'fs'; import"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/ssh-tunnel.test.ts"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — missingSock = join(sockDir, 'missing.sock'); writeFileSync(ambientSock, ''); writeFileSync"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/ssh-tunnel.test.ts"
+                },
+                "region": {
+                  "startLine": 169
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — address is added. When bound to a wildcard (0.0.0.0 / ::), the * machine's own hostname"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/cross-origin.ts"
+                },
+                "region": {
+                  "startLine": 129
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — normalizeHost(bindHost) : null; // Wildcard binds (0.0.0.0 / ::) are not real hostnames a client"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/cross-origin.ts"
+                },
+                "region": {
+                  "startLine": 154
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "telemetry",
+          "level": "note",
+          "message": {
+            "text": "Analytics or telemetry SDK present — plausible"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "plausible"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "docs/docs.json"
+                },
+                "region": {
+                  "startLine": 87
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "telemetry",
+          "level": "note",
+          "message": {
+            "text": "Analytics or telemetry SDK present — segment"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "segment"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/__tests__/sqlserver.integration.test.ts"
+                },
+                "region": {
+                  "startLine": 889
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "telemetry",
+          "level": "note",
+          "message": {
+            "text": "Analytics or telemetry SDK present — segment"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "segment"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/connectors/sqlserver/index.ts"
+                },
+                "region": {
+                  "startLine": 761
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "sensitive-fallback",
+          "level": "note",
+          "message": {
+            "text": "Falls back to a sensitive config file — aws-rds-credentials.test.ts"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "credential-bearing file shipped"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/__tests__/aws-rds-credentials.test.ts"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

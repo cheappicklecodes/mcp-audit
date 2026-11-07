@@ -1,0 +1,43 @@
+{
+  "repository": "javillegasna/filesystem",
+  "url": "https://github.com/javillegasna/filesystem",
+  "commit": "a34ef2055e9db16d3d8f2b405c3605eb80c9d942",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "A",
+  "primaryLanguages": {
+    "Python": 22
+  },
+  "filesInTree": 35,
+  "filesScanned": 26,
+  "filesUnsupported": 9,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "A",
+    "score": 100,
+    "counts": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    "findings": 0,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 0,
+    "likely": 0,
+    "inconclusive": 0,
+    "falsePositive": 0,
+    "weakness": 0,
+    "capability": 0
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

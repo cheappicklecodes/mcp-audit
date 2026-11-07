@@ -1,0 +1,46 @@
+{
+  "repository": "executeautomation/mcp-database-server",
+  "url": "https://github.com/executeautomation/mcp-database-server",
+  "commit": "d6afa4be08eb05343195635fa9462746a6be3a59",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "B",
+  "primaryLanguages": {
+    "TypeScript": 17,
+    "TSX": 3,
+    "JavaScript": 2,
+    "Shell": 1
+  },
+  "filesInTree": 79,
+  "filesScanned": 32,
+  "filesUnsupported": 47,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "C",
+    "score": 70,
+    "counts": {
+      "critical": 1,
+      "high": 10,
+      "medium": 11,
+      "low": 0,
+      "info": 3
+    },
+    "findings": 25,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 12,
+    "likely": 1,
+    "inconclusive": 9,
+    "falsePositive": 3,
+    "weakness": 12,
+    "capability": 13
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

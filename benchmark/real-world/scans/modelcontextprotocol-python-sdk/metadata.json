@@ -1,0 +1,45 @@
+{
+  "repository": "modelcontextprotocol/python-sdk",
+  "url": "https://github.com/modelcontextprotocol/python-sdk",
+  "commit": "77001c96f9507be0f4d009b83210a384a5e08bda",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "C",
+  "primaryLanguages": {
+    "Python": 870,
+    "JavaScript": 6,
+    "Shell": 5
+  },
+  "filesInTree": 1726,
+  "filesScanned": 938,
+  "filesUnsupported": 788,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "C",
+    "score": 68,
+    "counts": {
+      "critical": 0,
+      "high": 31,
+      "medium": 28,
+      "low": 39,
+      "info": 5
+    },
+    "findings": 103,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 30,
+    "likely": 6,
+    "inconclusive": 30,
+    "falsePositive": 37,
+    "weakness": 69,
+    "capability": 34
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

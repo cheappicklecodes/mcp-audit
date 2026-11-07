@@ -1,0 +1,114 @@
+{
+  "tool": "mcp-audit",
+  "version": "0.5.3",
+  "root": "src/sonirico-mcp-shell",
+  "score": 82,
+  "grade": "B",
+  "filesScanned": 31,
+  "rulesRun": 33,
+  "counts": {
+    "critical": 0,
+    "high": 5,
+    "medium": 3,
+    "low": 0,
+    "info": 0
+  },
+  "truncated": false,
+  "unverified": 8,
+  "findings": [
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "executor_test.go",
+      "line": 223,
+      "evidence": "expectStatus: \"error\", expectCmd: \"sh -c exit 3\", }, { name: \"shell",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "executor.go",
+      "line": 87,
+      "evidence": "start, result, label), nil } // runShell execs bash -c command, interpreting shell metacharacters.",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "handler_test.go",
+      "line": 31,
+      "evidence": "context.Background() t.Run(\"runs the command through bash -c\", func(t *testing.T) { handler := newTestShellHandler",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "main.go",
+      "line": 114,
+      "evidence": "mcp.WithDescription( \"UNRESTRICTED: runs the command through bash -c with no validation. Only available with",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "tools_git_test.go",
+      "line": 375,
+      "evidence": "\"content\": \"[filter \\\"pwn\\\"]\\n\\tclean = \\\"sh -c 'touch \" + canary + \"; cat'\\\"\\n\", \"append\"",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "transient-host",
+      "title": "Talks to a transient or free-hosting endpoint",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "Tunnels, pastes and run-as-a-service hosts change owners and content. A tool that pulls payloads from one is only as trustworthy as a URL nobody pinned.",
+      "fix": "Prefer static delivery (tagged release, raw file at a commit SHA) over dynamic endpoints.",
+      "file": "release-please-config.json",
+      "line": 2,
+      "evidence": "{ \"$schema\": \"https://raw.githubusercontent.com/googleapis/release-please/main",
+      "detail": "raw.githubusercontent.com"
+    },
+    {
+      "rule": "write-capability",
+      "title": "Can write or mutate files and state",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible.",
+      "fix": "Confine write roots, and prefer explicit overwrite semantics over silent replace.",
+      "file": "tools_fs.go",
+      "line": 133,
+      "evidence": "file instead of overwriting it\")), ), t.writeFile, ) s.AddTool( mcp.NewTool"
+    },
+    {
+      "rule": "write-capability",
+      "title": "Can write or mutate files and state",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible.",
+      "fix": "Confine write roots, and prefer explicit overwrite semantics over silent replace.",
+      "file": "tools_fs.go",
+      "line": 616,
+      "evidence": "t.output(out), nil } func (t *fsTools) writeFile(ctx context.Context, req mcp.CallToolRequest"
+    }
+  ]
+}

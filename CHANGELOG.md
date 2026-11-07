@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+Nothing in `src/` changed. This adds a real-world evaluation and rewrites the landing page around it.
+
+`benchmark/real-world/` holds fourteen public MCP servers pinned to full SHAs, the scan output for each in JSON and SARIF, and a per-row classification of all 890 findings. No target was installed or executed and no rule was touched for the run. Two numbers come out of it and they disagree on purpose: 69.9% confirmed-only precision across everything, 37.5% once the capability descriptors are stripped and only rows that claim something is wrong are scored. Recall is not reported, because no independent list of the real bugs exists and a recall percentage here would be invented.
+
+The README leads with those numbers, states both denominators, and gives the limits their own bullet: seven known misses, an `A` that means the scanner ran out of shapes rather than that the server is clean, and a note that the fixed synthetic corpus and the real-world set measure different things.
+
 ## 0.5.2
 
 The benchmark harness no longer trusts a directory tree it did not write.

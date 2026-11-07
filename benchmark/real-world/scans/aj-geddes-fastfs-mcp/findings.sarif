@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "mcp-audit",
+          "version": "0.5.3",
+          "informationUri": "https://github.com/cheappicklecodes/mcp-audit",
+          "rules": [
+            {
+              "id": "shell-exec",
+              "name": "Executes shell commands",
+              "shortDescription": {
+                "text": "Executes shell commands"
+              },
+              "fullDescription": {
+                "text": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary."
+              },
+              "help": {
+                "text": "Use an allowlist, avoid `shell: true`, and quote interpolated values."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "write-capability",
+              "name": "Can write or mutate files and state",
+              "shortDescription": {
+                "text": "Can write or mutate files and state"
+              },
+              "fullDescription": {
+                "text": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible."
+              },
+              "help": {
+                "text": "Confine write roots, and prefer explicit overwrite semantics over silent replace."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — HTTPS with credentials in URL try: subprocess.run( \"git config --global"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "git_tools.py"
+                },
+                "region": {
+                  "startLine": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — ] result = subprocess.run(cmd, capture_output=True, text"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "git_tools.py"
+                },
+                "region": {
+                  "startLine": 119
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — access_tokens\" ] result = subprocess.run(cmd, capture_output=True, text"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "git_tools.py"
+                },
+                "region": {
+                  "startLine": 139
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — the credential helper subprocess.run( f'git"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "git_tools.py"
+                },
+                "region": {
+                  "startLine": 198
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — file=sys.stderr, flush=True) result = subprocess.run( cmd,"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "server.py"
+                },
+                "region": {
+                  "startLine": 42
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — True) if recursive: shutil.copytree(source, destination, dirs_exist_ok"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "server.py"
+                },
+                "region": {
+                  "startLine": 376
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — destination}'\" else: shutil.copy2(source, destination)"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "server.py"
+                },
+                "region": {
+                  "startLine": 379
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — ) or choose a different name.\" shutil.move(source, destination)"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "server.py"
+                },
+                "region": {
+                  "startLine": 403
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

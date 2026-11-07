@@ -1,0 +1,44 @@
+{
+  "repository": "blazickjp/arxiv-mcp-server",
+  "url": "https://github.com/blazickjp/arxiv-mcp-server",
+  "commit": "572e301bb3198962c025d5ed5e14becb86868daa",
+  "branch": "main",
+  "license": "Apache License",
+  "group": "B",
+  "primaryLanguages": {
+    "Python": 84,
+    "Shell": 2
+  },
+  "filesInTree": 115,
+  "filesScanned": 103,
+  "filesUnsupported": 12,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "C",
+    "score": 72,
+    "counts": {
+      "critical": 0,
+      "high": 5,
+      "medium": 38,
+      "low": 2,
+      "info": 0
+    },
+    "findings": 45,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 10,
+    "likely": 0,
+    "inconclusive": 31,
+    "falsePositive": 4,
+    "weakness": 7,
+    "capability": 38
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

@@ -1,0 +1,43 @@
+{
+  "repository": "MarkusPfundstein/cmd-line-executor-MCP",
+  "url": "https://github.com/MarkusPfundstein/cmd-line-executor-MCP",
+  "commit": "26479b913ec8b9822fad0fcb0ee59375a30c1894",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "A",
+  "primaryLanguages": {
+    "Python": 2
+  },
+  "filesInTree": 7,
+  "filesScanned": 3,
+  "filesUnsupported": 4,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "A",
+    "score": 100,
+    "counts": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    "findings": 0,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 0,
+    "likely": 0,
+    "inconclusive": 0,
+    "falsePositive": 0,
+    "weakness": 0,
+    "capability": 0
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

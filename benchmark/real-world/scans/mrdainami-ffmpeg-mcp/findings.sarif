@@ -1,0 +1,404 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "mcp-audit",
+          "version": "0.5.3",
+          "informationUri": "https://github.com/cheappicklecodes/mcp-audit",
+          "rules": [
+            {
+              "id": "shell-exec",
+              "name": "Executes shell commands",
+              "shortDescription": {
+                "text": "Executes shell commands"
+              },
+              "fullDescription": {
+                "text": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary."
+              },
+              "help": {
+                "text": "Use an allowlist, avoid `shell: true`, and quote interpolated values."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "unpinned-dependency",
+              "name": "Dependency ranges that can float",
+              "shortDescription": {
+                "text": "Dependency ranges that can float"
+              },
+              "fullDescription": {
+                "text": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust."
+              },
+              "help": {
+                "text": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "write-capability",
+              "name": "Can write or mutate files and state",
+              "shortDescription": {
+                "text": "Can write or mutate files and state"
+              },
+              "fullDescription": {
+                "text": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible."
+              },
+              "help": {
+                "text": "Confine write roots, and prefer explicit overwrite semantics over silent replace."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "capability-mismatch",
+              "name": "Capability declaration does not match what the server serves",
+              "shortDescription": {
+                "text": "Capability declaration does not match what the server serves"
+              },
+              "fullDescription": {
+                "text": "The capabilities block is the contract the host negotiates with. Declaring `tools: {}` and then answering `tools/list` means the client never agreed to tools, so list-change notifications go nowhere and some hosts keep a stale catalog. The reverse — advertising tools with no `tools/call` handler — gives the model a catalog it cannot invoke."
+              },
+              "help": {
+                "text": "Declare what the server really serves: `capabilities: { tools: { listChanged: true } }`, and implement every tool listed."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "hardcoded-credential-default",
+              "name": "Credential falls back to a baked-in default",
+              "shortDescription": {
+                "text": "Credential falls back to a baked-in default"
+              },
+              "fullDescription": {
+                "text": "`process.env.TOKEN || \"abc123\"` means the server works without configuration, which hides that it is running on a shared or demo credential."
+              },
+              "help": {
+                "text": "Document the default, or fail loudly when the variable is missing."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "telemetry",
+              "name": "Analytics or telemetry SDK present",
+              "shortDescription": {
+                "text": "Analytics or telemetry SDK present"
+              },
+              "fullDescription": {
+                "text": "Telemetry decides what leaves the machine before you have asked the tool anything."
+              },
+              "help": {
+                "text": "Look for a documented off switch and confirm the endpoint."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            },
+            {
+              "id": "transport",
+              "name": "Uses stdio transport",
+              "shortDescription": {
+                "text": "Uses stdio transport"
+              },
+              "fullDescription": {
+                "text": "Local stdio servers inherit your user account. There is no sandbox between the server and your files."
+              },
+              "help": {
+                "text": "Prefer stdio for local work and HTTP with auth for remote."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — const start = Date.now(); const child = spawn(args.command, { cwd, shell:"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "string shell, injection-prone"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/index.ts"
+                },
+                "region": {
+                  "startLine": 146
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — modelcontextprotocol/sdk/types.js\"; import { spawn } from \"node:child_process\"; import { mkdir, writeFile } from"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/index.ts"
+                },
+                "region": {
+                  "startLine": 19
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @modelcontextprotocol/sdk: ^1.0.4"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 21
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — ffmpeg-static: ^5.2.0"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 22
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — ffprobe-static: ^3.1.0"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 23
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @types/node: ^20.11.0"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 26
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — from \"node:child_process\"; import { mkdir, writeFile } from \"node:fs/promises\"; import"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/index.ts"
+                },
+                "region": {
+                  "startLine": 20
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — ${res.statusText}`, }; } await writeFile(dest, res.body); return { ok"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/index.ts"
+                },
+                "region": {
+                  "startLine": 213
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "capability-mismatch",
+          "level": "warning",
+          "message": {
+            "text": "Capability declaration does not match what the server serves — \"dainami-ffmpeg-mcp\", version: \"0.1.4\" }, { capabilities: { tools: {} } }, ); server.setRequestHandler"
+          },
+          "properties": {
+            "confidence": "confirmed",
+            "detail": "declared empty, tools served anyway"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/index.ts"
+                },
+                "region": {
+                  "startLine": 219
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "hardcoded-credential-default",
+          "level": "warning",
+          "message": {
+            "text": "Credential falls back to a baked-in default — console.error(`[dainami-ffmpeg-mcp] FFMPEG_MCP_WORKDIR raw: ${process.env.FFMPEG_MCP_WORKDIR ?? \"(unset)\"}`); console…"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/index.ts"
+                },
+                "region": {
+                  "startLine": 309
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "telemetry",
+          "level": "note",
+          "message": {
+            "text": "Analytics or telemetry SDK present — segment"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "segment"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/index.ts"
+                },
+                "region": {
+                  "startLine": 253
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "transport",
+          "level": "note",
+          "message": {
+            "text": "Uses stdio transport — StdioServerTransport"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "StdioServerTransport"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/index.ts"
+                },
+                "region": {
+                  "startLine": 14
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

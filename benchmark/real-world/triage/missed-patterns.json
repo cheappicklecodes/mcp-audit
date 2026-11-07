@@ -1,0 +1,290 @@
+{
+  "note": "Confirmed detection misses found by reading target source by hand, not by the scanner. Each row names the sink, the caller-controlled input path, and the reason the current rule could not see it. `inScope` means the rule that owns the pattern exists and should have caught it; `outOfScope` means no rule covers the pattern at all. Proofs under `proof/` are re-implementations of the target's own string building, run locally; the target servers were still never executed.",
+  "reviewer": "AI-assisted source review plus automated triage (see methodology.md); no independent human second pass",
+  "counts": {
+    "total": 7,
+    "inScope": 6,
+    "outOfScope": 1,
+    "confirmedSink": 7,
+    "probableSink": 0
+  },
+  "missed": [
+    {
+      "id": "MP-1",
+      "repository": "javillegasna/filesystem",
+      "commit": "a34ef2055e9db16d3d8f2b405c3605eb80c9d942",
+      "group": "A",
+      "language": "Python",
+      "scannerResult": "0 findings over 26 files; grade A, 100/100",
+      "severity": "high",
+      "classification": "confirmedSink",
+      "inScope": true,
+      "ownerRule": "path-traversal",
+      "sink": {
+        "file": "src/core/config.py",
+        "line": 17,
+        "code": "return any(path.startswith(d) for d in self.__allowed_paths)"
+      },
+      "inputPath": {
+        "file": "src/tools/read_file.py",
+        "line": 32,
+        "steps": [
+          "the MCP tool argument `path` is a plain str validated by `validate_path` (pydantic AfterValidator)",
+          "src/core/validations.py:35 normalises with os.path.abspath",
+          "src/core/validations.py:48 hands the absolute path to __validate_absolute_path",
+          "src/core/validations.py:27 calls ServerConfig().is_allowed_path",
+          "src/core/config.py:17 does a bare str.startswith against each allowlist entry"
+        ],
+        "code": "with open(input.path, encoding=\"utf-8\") as file:"
+      },
+      "why": "No separator is appended, so the check is a string prefix and not a path containment. With an allowlist of /home/user/safe, the requested path /home/user/safe-evil/secret.txt passes and is read.",
+      "whyScannerMissed": "traversal.js only fires on a join *expression* (path.join / Path /). Here the join happens earlier via os.path.abspath, the result is stored in a local, and the comparison happens in a different module. The guard-clamp machinery is keyed to the sink expression and never sees a startswith() that takes an already-resolved absolute path.",
+      "proof": {
+        "fixture": "proof/g1/a.py",
+        "command": "node bin/mcp-audit.js proof/g1 --only path-traversal --format json",
+        "observed": "0 path-traversal findings; the only finding is weak-allowlist (high, 'no metacharacter check')",
+        "sibling": "proof/safe-evil/secret.txt stands in for /home/user/safe-evil/secret.txt"
+      },
+      "proposedChange": "When a local is assigned from an absolute-path normaliser (abspath / resolve / realpath) and its containing function ends in an allowlist prefix test, treat the pair as a traversal sink and grade the comparison for separator awareness. Requires the same variable-aware association that 0.4.0 started in gated(); this is its cross-function form.",
+      "expectedImprovement": "Finds the class of 'resolved then prefix-tested' bugs, which is the most common shape in Python filesystem servers here (2 of 14 targets).",
+      "regressionTest": "benchmark/cases/path/bypass-resolved-prefix: helper returning os.path.abspath, caller testing startswith(ALLOWED) without sep, expect one high path-traversal."
+    },
+    {
+      "id": "MP-2",
+      "repository": "webconsulting/mcp-server-wsl-filesystem",
+      "commit": "0f0a0bae128b068a5044b2bcccbc8040943c2353",
+      "group": "A",
+      "language": "TypeScript",
+      "scannerResult": "11 findings; no path-traversal; grade C, 65/100",
+      "severity": "high",
+      "classification": "confirmedSink",
+      "inScope": true,
+      "ownerRule": "path-traversal",
+      "sink": {
+        "file": "index.ts",
+        "lines": [
+          458,
+          467,
+          479
+        ],
+        "code": "allowedDirectories.some(dir => normalizedRequested.startsWith(dir))"
+      },
+      "inputPath": {
+        "file": "index.ts",
+        "line": 1118,
+        "steps": [
+          "tool argument -> validatePath(parsed.data.path)",
+          "line 451-455 resolve() + normalizePath() produce an absolute, normalised string",
+          "line 458 prefix-tests it against allowedDirectories",
+          "the same bug repeats on the symlink-resolved form (467) and the parent-directory fallback (479)"
+        ]
+      },
+      "why": "Same missing separator: /mnt/c/safe-evil passes a /mnt/c/safe allowlist at all three checks, including the two that exist specifically to defeat symlink escapes.",
+      "whyScannerMissed": "As MP-1 - the check is a startswith on an already-resolved local, not a join at the sink. Additionally the sink file never contains `path.join` at all, so traversal.js has no anchor in the file to attach a guard question to.",
+      "proof": {
+        "sibling": "Same semantics as proof/g1; verified by reading the three call sites, not re-implemented",
+        "command": "node bin/mcp-audit.js <clone> --only path-traversal --format json",
+        "observed": "0 findings"
+      },
+      "proposedChange": "Same as MP-1 for the resolved-local case. Also: a name-based allowlist variable (`allowedDirectories`) used with `.some(dir => x.startsWith(dir))` is a recognisable shape on its own and could be matched directly.",
+      "expectedImprovement": "Covers the resolver-helper idiom in TypeScript, which the Python-side fix does not.",
+      "regressionTest": "benchmark/cases/path/bypass-resolved-some: allowedDirectories.some(d => resolved.startsWith(d)), expect one high path-traversal."
+    },
+    {
+      "id": "MP-3",
+      "repository": "webconsulting/mcp-server-wsl-filesystem",
+      "commit": "0f0a0bae128b068a5044b2bcccbc8040943c2353",
+      "group": "A",
+      "language": "TypeScript",
+      "scannerResult": "shell-exec high on lines 273/274, marked inconclusive; no shell-injection",
+      "severity": "high",
+      "classification": "confirmedSink",
+      "inScope": true,
+      "ownerRule": "shell-exec (as a severity question) and shell-injection",
+      "sink": {
+        "file": "index.ts",
+        "line": 274,
+        "code": "`wsl sh -c \"${joined}\"` -> execAsync(fullCommand)"
+      },
+      "inputPath": {
+        "file": "index.ts",
+        "lines": [
+          593,
+          594,
+          599,
+          600
+        ],
+        "steps": [
+          "caller `pattern` reaches index.ts:594, only `\"` is escaped",
+          "index.ts:600 interpolates it inside double quotes in a grep argument",
+          "index.ts:271 joins the pipeline with ` | ` and again escapes only `\"`",
+          "index.ts:274 wraps the lot in sh -c \"...\" and runs it through execAsync"
+        ],
+        "code": "const escapedPattern = pattern.replace(/\"/g, '\\\\\"');"
+      },
+      "why": "Double quotes inside a double-quoted sh -c string do not stop `$( )` or backticks. pattern = \"$(id)\" reaches the shell unsubstituted. The path partner is escaped correctly (idx 289 escapes $ and backtick) but the pattern is not, which also makes the asymmetry visible inside one file.",
+      "whyScannerMissed": "shell-injection is JS/TS-only and only looks for caller values passed as the *first argument* to exec/execSync. Here the first argument is a template literal built three functions away from the sink, so CALLER_ARG sees `${joined}` rather than a caller-derived local. shell-exec fires but has no severity escalation and settles on 'pattern match only'.",
+      "proof": {
+        "script": "proof/wsl.js",
+        "command": "node proof/wsl.js",
+        "observed": "pattern escaped? wsl sh -c \"find \\\"/home/u\\\" -type f | (grep -i \\\"$(id)\\\" || true)\" - $(id) still live"
+      },
+      "proposedChange": "Follow a template literal to the locals it interpolates (one hop) before deciding the argument is not caller-controlled, and treat execAsync/exec with a template-literal argument as a shell sink in the same way as a bare variable.",
+      "expectedImprovement": "Removes the largest single source of 'inconclusive' in the TS sample and turns a real critical into a critical.",
+      "regressionTest": "benchmark/cases/shell/via-template: const cmd = `grep -i \"${pattern}\"`; execAsync(cmd), expect critical shell-injection."
+    },
+    {
+      "id": "MP-4",
+      "repository": "MarkusPfundstein/cmd-line-executor-MCP",
+      "commit": "26479b913ec8b9822fad0fcb0ee59375a30c1894",
+      "group": "A",
+      "language": "Python",
+      "scannerResult": "0 findings over 3 files; grade A, 100/100",
+      "severity": "high",
+      "classification": "confirmedSink",
+      "inScope": false,
+      "ownerRule": "none",
+      "sink": {
+        "file": "src/cmd_line_executor/server.py",
+        "line": 36,
+        "code": "process = await asyncio.create_subprocess_exec(*cmd_list, stdout=..., stderr=...)"
+      },
+      "inputPath": {
+        "file": "src/cmd_line_executor/server.py",
+        "lines": [
+          110,
+          116
+        ],
+        "steps": [
+          "tool argument cmd and args are both plain strings",
+          "line 31-33 packs them into a two-element list",
+          "line 36 splats the list into create_subprocess_exec (no shell)"
+        ]
+      },
+      "why": "The server's entire purpose is running an arbitrary program. There is no shell, so command injection is off the table, but the executable and its argument string are caller-chosen - that is arbitrary code execution by design. A tool that hands the model a shell and reports itself clean is the worst possible grade for a reader.",
+      "whyScannerMissed": "create_subprocess_exec and create_subprocess_shell appear in no rule. capability.js lists execSync|exec|spawn|execFile|subprocess.run|os.system|sh -c|bash -c; asyncio.create_subprocess_* is absent from capability.js, shell-input.js and every other rule.",
+      "proof": {
+        "method": "Direct read of server.py:29-40 and the tool schema at 81-98; both inputs are declared strings with no enum and no allowlist.",
+        "observed": "logical consequence of create_subprocess_exec with caller argv - no shell parsing, so the risk is executable/argument choice rather than metacharacters"
+      },
+      "proposedChange": "Add asyncio.create_subprocess_exec and create_subprocess_shell to the capability sink list, and emit two different findings: shell-exec when the argv is caller-derived (executable choice), shell-injection only for create_subprocess_shell. Do not reuse shell-injection's severity for exec.",
+      "expectedImprovement": "Two whole targets stop grading A while executing arbitrary commands (this repo and any other aiohttp/asyncio server).",
+      "regressionTest": "benchmark/cases/exec/aio-subprocess-exec (caller argv, expect high shell-exec) and .../aio-subprocess-shell (string command, expect critical shell-injection)."
+    },
+    {
+      "id": "MP-5",
+      "repository": "mark-oori/mcpserve",
+      "commit": "b310fd5a2e772a41f9d9a2f32178705a315fb955",
+      "group": "A",
+      "language": "Python",
+      "scannerResult": "4 findings; remote-no-auth absent; grade B, 81/100",
+      "severity": "high",
+      "classification": "confirmedSink",
+      "inScope": true,
+      "ownerRule": "remote-no-auth",
+      "sink": {
+        "file": "main.py",
+        "line": 33,
+        "code": "mcp = FastMCP(name=APP_NAME, **settings)"
+      },
+      "inputPath": {
+        "file": "main.py",
+        "lines": [
+          19,
+          22,
+          29,
+          42
+        ],
+        "steps": [
+          "a middleware() that compares the x-api-key header is defined at 19-22",
+          "it is never installed: line 29 is `# 'middleware': middleware,` inside settings",
+          "the server runs over SSE and listens on APP_PORT 8005 (line 15, 42)"
+        ],
+        "code": "'middleware': middleware,   // commented out"
+      },
+      "why": "An HTTP-reachable server with a working auth function that is switched off. Anyone on the network can call shell_command, which runs arbitrary commands via subprocess with shell=True.",
+      "whyScannerMissed": "transport.js tests `hasAuth` against the whole file text. The words 'api_key' and 'middleware' appear in the file, so the find is suppressed - even though the line that would install it is commented out and stripComments is not applied there, and even though the definition is separate from the wiring.",
+      "proof": {
+        "method": "Read main.py:11-42; the comment marker is visible on line 29.",
+        "observed": "the auth exists and is inert; nothing in the file's live code path installs it"
+      },
+      "proposedChange": "For middleware-shaped auth, require the reference to be live (not on a comment line) and require it to reach the server constructor's options; a separately declared handler that is never passed is exactly the 'control that does nothing' shape the ruleset already names elsewhere.",
+      "expectedImprovement": "Turns 23 remote-no-auth false positives around: the rule would stop matching passive words and start matching wiring.",
+      "regressionTest": "benchmark/cases/transport/middleware-commented-out (expect high remote-no-auth) beside the existing safe case."
+    },
+    {
+      "id": "MP-6",
+      "repository": "mark-oori/mcpserve",
+      "commit": "b310fd5a2e772a41f9d9a2f32178705a315fb955",
+      "group": "A",
+      "language": "Python",
+      "scannerResult": "no hardcoded-credential-default finding",
+      "severity": "medium",
+      "classification": "confirmedSink",
+      "inScope": true,
+      "ownerRule": "hardcoded-credential-default",
+      "sink": {
+        "file": "main.py",
+        "line": 16,
+        "code": "MCP_API_KEY = os.getenv(\"MCP_API_KEY\", 'test1234')"
+      },
+      "inputPath": {
+        "file": "main.py",
+        "line": 21,
+        "code": "if request.headers.get(\"x-api-key\") != MCP_API_KEY:"
+      },
+      "why": "The API key defaults to the literal test1234. If the operator does not set it - and the middleware is commented out anyway - the server's only credential is a published default.",
+      "whyScannerMissed": "secrets.js only matches process.env.X || '...' and the inline os.environ.get(\"X\", '...') call form. A module-level `os.getenv` result assigned to a constant with a default is structurally identical but textually different.",
+      "proof": {
+        "method": "Read main.py:16 and 21.",
+        "observed": "the fallback literal is real and is compared against a live header"
+      },
+      "proposedChange": "Match os.getenv(...) with a second argument and process.env in any binding position (assignment, destructure, constant), not just as an expression inside the comparison.",
+      "expectedImprovement": "Closes a trivially bypassable evasion: move the same call to a constant and the rule stops working.",
+      "regressionTest": "benchmark/cases/secrets/getenv-const-default: MCP_KEY = os.getenv('MCP_KEY', 'changeme'), expect one medium hardcoded-credential-default."
+    },
+    {
+      "id": "MP-7",
+      "repository": "aj-geddes/fastfs-mcp",
+      "commit": "bcbbc4d324e682c44ef6d644223f4de65b46394e",
+      "group": "A",
+      "language": "Python",
+      "scannerResult": "8 findings including shell-exec high at server.py:42; no shell-injection; grade C, 73/100",
+      "severity": "high",
+      "classification": "confirmedSink",
+      "inScope": true,
+      "ownerRule": "shell-injection (Python support) and the shell-exec severity question",
+      "sink": {
+        "file": "server.py",
+        "line": 42,
+        "code": "subprocess.run(cmd, shell=True, capture_output=True, text=True)"
+      },
+      "inputPath": {
+        "file": "server.py",
+        "lines": [
+          321,
+          329,
+          337,
+          340
+        ],
+        "steps": [
+          "tool arguments `path` (default \".\") and `pattern` (default \"*\") are plain str",
+          "line 337 appends pattern to cmd_parts unquoted",
+          "line 340 quotes a part only when it contains a space, else emits it bare",
+          "line 341 passes the joined string to run_command, which is subprocess.run(..., shell=True)"
+        ],
+        "code": "cmd = \" \".join(f\"'{p}'\" if ' ' in p else p for p in cmd_parts)"
+      },
+      "why": "Quoting is conditional on a space. `find . -name *.py;id` runs id. `path=\"/tmp/x;id\"` likewise. Neither value ever passes through a shell-quoting function.",
+      "whyScannerMissed": "shell-injection is gated by `if (!/\\.[mc]?[jt]s$/.test(file.ext)) return []` - Python never reaches the critical rule. The only thing fired is the generic shell-exec capability line, which is about the presence of a shell, not about caller strings reaching one.",
+      "proof": {
+        "script": "proof/find2.js",
+        "command": "node proof/find2.js",
+        "observed": "A: find /tmp/work -name *.py;id | B: find /tmp/work;id -name * | C: find /tmp/work -name '$(touch /tmp/pwned)' - all reach the shell unquoted"
+      },
+      "proposedChange": "Port shell-injection's caller-argument test to Python sinks (subprocess.run/check_output/Popen with shell=True, os.system, os.popen), and add a quoting-quality question to the generic shell-exec finding for other languages.",
+      "expectedImprovement": "Python is 184 of 890 findings and the largest untested language for the critical rule; this is the highest-volume false-negative class in the sample.",
+      "regressionTest": "benchmark/cases/shell/py-shell-true-caller: subprocess.run(f\"find {path} -name {pattern}\", shell=True), expect critical shell-injection; plus a safe twin using shlex.quote."
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "mcp-audit",
+          "version": "0.5.3",
+          "informationUri": "https://github.com/cheappicklecodes/mcp-audit",
+          "rules": [
+            {
+              "id": "telemetry",
+              "name": "Analytics or telemetry SDK present",
+              "shortDescription": {
+                "text": "Analytics or telemetry SDK present"
+              },
+              "fullDescription": {
+                "text": "Telemetry decides what leaves the machine before you have asked the tool anything."
+              },
+              "help": {
+                "text": "Look for a documented off switch and confirm the endpoint."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "telemetry",
+          "level": "note",
+          "message": {
+            "text": "Analytics or telemetry SDK present — segment"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "segment"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "internal/security/validate.go"
+                },
+                "region": {
+                  "startLine": 235
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "telemetry",
+          "level": "note",
+          "message": {
+            "text": "Analytics or telemetry SDK present — segment"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "segment"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "internal/tools/write.go"
+                },
+                "region": {
+                  "startLine": 158
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

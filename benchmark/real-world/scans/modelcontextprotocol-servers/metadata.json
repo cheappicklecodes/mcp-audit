@@ -1,0 +1,45 @@
+{
+  "repository": "modelcontextprotocol/servers",
+  "url": "https://github.com/modelcontextprotocol/servers",
+  "commit": "36380287ed3b15d115b55f546617d723072b1296",
+  "branch": "main",
+  "license": "The MCP project is undergoing a licensing transition from the MIT License to the Apache License, Version 2.0 (\"Apache-2.0\"). All new code and specification contributions to the project are licensed under Apache-2.0. Documentation contributions (excluding specifications) are licensed under CC-BY-4.0.",
+  "group": "C",
+  "primaryLanguages": {
+    "TypeScript": 146,
+    "JavaScript": 81,
+    "Python": 48
+  },
+  "filesInTree": 390,
+  "filesScanned": 328,
+  "filesUnsupported": 62,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "F",
+    "score": 12,
+    "counts": {
+      "critical": 3,
+      "high": 182,
+      "medium": 277,
+      "low": 16,
+      "info": 16
+    },
+    "findings": 494,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 267,
+    "likely": 29,
+    "inconclusive": 110,
+    "falsePositive": 88,
+    "weakness": 229,
+    "capability": 265
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

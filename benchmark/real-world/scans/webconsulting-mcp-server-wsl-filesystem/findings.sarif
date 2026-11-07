@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "mcp-audit",
+          "version": "0.5.3",
+          "informationUri": "https://github.com/cheappicklecodes/mcp-audit",
+          "rules": [
+            {
+              "id": "shell-exec",
+              "name": "Executes shell commands",
+              "shortDescription": {
+                "text": "Executes shell commands"
+              },
+              "fullDescription": {
+                "text": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary."
+              },
+              "help": {
+                "text": "Use an allowlist, avoid `shell: true`, and quote interpolated values."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "capability-mismatch",
+              "name": "Capability declaration does not match what the server serves",
+              "shortDescription": {
+                "text": "Capability declaration does not match what the server serves"
+              },
+              "fullDescription": {
+                "text": "The capabilities block is the contract the host negotiates with. Declaring `tools: {}` and then answering `tools/list` means the client never agreed to tools, so list-change notifications go nowhere and some hosts keep a stale catalog. The reverse — advertising tools with no `tools/call` handler — gives the model a catalog it cannot invoke."
+              },
+              "help": {
+                "text": "Declare what the server really serves: `capabilities: { tools: { listChanged: true } }`, and implement every tool listed."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "install-script",
+              "name": "Package runs code at install time",
+              "shortDescription": {
+                "text": "Package runs code at install time"
+              },
+              "fullDescription": {
+                "text": "preinstall/install/postinstall executes before you have run anything, with your user permissions. This is the standard vector for a compromised dependency."
+              },
+              "help": {
+                "text": "Read the script. Pin the version and check it has no network access."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "unpinned-dependency",
+              "name": "Dependency ranges that can float",
+              "shortDescription": {
+                "text": "Dependency ranges that can float"
+              },
+              "fullDescription": {
+                "text": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust."
+              },
+              "help": {
+                "text": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "transport",
+              "name": "Uses stdio transport",
+              "shortDescription": {
+                "text": "Uses stdio transport"
+              },
+              "fullDescription": {
+                "text": "Local stdio servers inherit your user account. There is no sandbox between the server and your files."
+              },
+              "help": {
+                "text": "Prefer stdio for local work and HTTP with auth for remote."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — modelcontextprotocol/sdk/types.js\"; import { exec } from 'child_process'; import { promisify } from 'util'"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "index.ts"
+                },
+                "region": {
+                  "startLine": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — allowedDistro ? `wsl -d ${allowedDistro} sh -c \"${joined}\"` : `wsl sh -c \"${joined"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "index.ts"
+                },
+                "region": {
+                  "startLine": 273
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — allowedDistro} sh -c \"${joined}\"` : `wsl sh -c \"${joined}\"`; const { stdout } = await"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "index.ts"
+                },
+                "region": {
+                  "startLine": 274
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — const result = await execWslCommand( `sh -c \"ls -la \\\\\"${wslPath}\\\\\" | tail -n +3\"`"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "index.ts"
+                },
+                "region": {
+                  "startLine": 317
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "capability-mismatch",
+          "level": "warning",
+          "message": {
+            "text": "Capability declaration does not match what the server serves — \"secure-filesystem-server\", version: \"1.3.1\", }, { capabilities: { tools: {}, }, });"
+          },
+          "properties": {
+            "confidence": "confirmed",
+            "detail": "declared empty, tools served anyway"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "index.ts"
+                },
+                "region": {
+                  "startLine": 569
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "install-script",
+          "level": "warning",
+          "message": {
+            "text": "Package runs code at install time — prepare: npm run build"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "executes on npm install"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 16
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @modelcontextprotocol/sdk: ^1.13.2"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 20
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — diff: ^8.0.2"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 21
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — zod-to-json-schema: ^3.24.6"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 22
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "unpinned-dependency",
+          "level": "warning",
+          "message": {
+            "text": "Dependency ranges that can float — @types/diff: ^5.0.9"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "floating range"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "transport",
+          "level": "note",
+          "message": {
+            "text": "Uses stdio transport — StdioServerTransport"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "StdioServerTransport"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "index.ts"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

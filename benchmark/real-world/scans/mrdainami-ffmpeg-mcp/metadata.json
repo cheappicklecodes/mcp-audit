@@ -1,0 +1,43 @@
+{
+  "repository": "mrdainami/ffmpeg-mcp",
+  "url": "https://github.com/mrdainami/ffmpeg-mcp",
+  "commit": "e95d87ec33b31df1a46a7fe3bad211bdbac24da7",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "A",
+  "primaryLanguages": {
+    "TypeScript": 2
+  },
+  "filesInTree": 9,
+  "filesScanned": 6,
+  "filesUnsupported": 3,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "C",
+    "score": 69,
+    "counts": {
+      "critical": 1,
+      "high": 1,
+      "medium": 8,
+      "low": 1,
+      "info": 1
+    },
+    "findings": 12,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 8,
+    "likely": 1,
+    "inconclusive": 1,
+    "falsePositive": 2,
+    "weakness": 5,
+    "capability": 7
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

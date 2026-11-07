@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "mcp-audit",
+          "version": "0.5.3",
+          "informationUri": "https://github.com/cheappicklecodes/mcp-audit",
+          "rules": [
+            {
+              "id": "shell-exec",
+              "name": "Executes shell commands",
+              "shortDescription": {
+                "text": "Executes shell commands"
+              },
+              "fullDescription": {
+                "text": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary."
+              },
+              "help": {
+                "text": "Use an allowlist, avoid `shell: true`, and quote interpolated values."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "transient-host",
+              "name": "Talks to a transient or free-hosting endpoint",
+              "shortDescription": {
+                "text": "Talks to a transient or free-hosting endpoint"
+              },
+              "fullDescription": {
+                "text": "Tunnels, pastes and run-as-a-service hosts change owners and content. A tool that pulls payloads from one is only as trustworthy as a URL nobody pinned."
+              },
+              "help": {
+                "text": "Prefer static delivery (tagged release, raw file at a commit SHA) over dynamic endpoints."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "write-capability",
+              "name": "Can write or mutate files and state",
+              "shortDescription": {
+                "text": "Can write or mutate files and state"
+              },
+              "fullDescription": {
+                "text": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible."
+              },
+              "help": {
+                "text": "Confine write roots, and prefer explicit overwrite semantics over silent replace."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — expectStatus: \"error\", expectCmd: \"sh -c exit 3\", }, { name: \"shell"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "executor_test.go"
+                },
+                "region": {
+                  "startLine": 223
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — start, result, label), nil } // runShell execs bash -c command, interpreting shell metacharacters."
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "executor.go"
+                },
+                "region": {
+                  "startLine": 87
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — context.Background() t.Run(\"runs the command through bash -c\", func(t *testing.T) { handler := newTestShellHandler"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "handler_test.go"
+                },
+                "region": {
+                  "startLine": 31
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — mcp.WithDescription( \"UNRESTRICTED: runs the command through bash -c with no validation. Only available with"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "main.go"
+                },
+                "region": {
+                  "startLine": 114
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — \"content\": \"[filter \\\"pwn\\\"]\\n\\tclean = \\\"sh -c 'touch \" + canary + \"; cat'\\\"\\n\", \"append\""
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tools_git_test.go"
+                },
+                "region": {
+                  "startLine": 375
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "transient-host",
+          "level": "warning",
+          "message": {
+            "text": "Talks to a transient or free-hosting endpoint — { \"$schema\": \"https://raw.githubusercontent.com/googleapis/release-please/main"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "raw.githubusercontent.com"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "release-please-config.json"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — file instead of overwriting it\")), ), t.writeFile, ) s.AddTool( mcp.NewTool"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tools_fs.go"
+                },
+                "region": {
+                  "startLine": 133
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "write-capability",
+          "level": "warning",
+          "message": {
+            "text": "Can write or mutate files and state — t.output(out), nil } func (t *fsTools) writeFile(ctx context.Context, req mcp.CallToolRequest"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tools_fs.go"
+                },
+                "region": {
+                  "startLine": 616
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

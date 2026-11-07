@@ -1,0 +1,53 @@
+{
+  "note": "Rule-by-rule outcomes. Precision here is confirmed / (confirmed + false positive) and is null where a rule produced too few rows or no confirmed rows to divide by. `kind` separates capability descriptors from weakness findings; the weakness block is the one that matters. Findings per 1,000 lines uses the scanned source total of 171,711 lines across 1,711 code files.",
+  "totals": {
+    "findings": 890,
+    "confirmed": 422,
+    "likely": 61,
+    "inconclusive": 225,
+    "falsePositive": 182,
+    "weaknessFindings": 421,
+    "capabilityFindings": 469
+  },
+  "weaknessOnly": {
+    "humanValidatedRate": 46.7,
+    "confirmedOnlyPrecision": 37.5,
+    "denominator": 291
+  },
+  "allFindings": {
+    "humanValidatedRate": 72.6,
+    "confirmedOnlyPrecision": 69.9,
+    "denominator": 665
+  },
+  "perThousandLines": 5.18,
+  "rules": [
+    { "rule": "telemetry", "kind": "weakness", "severity": "low", "total": 61, "confirmed": 4, "likely": 1, "inconclusive": 0, "falsePositive": 56, "falsePositiveRate": 91.8, "confirmedOnlyPrecision": 6.7, "verdict": "worst signal-to-noise in the sample; matches the English words plausible and segment" },
+    { "rule": "shell-injection", "kind": "weakness", "severity": "critical", "total": 6, "confirmed": 0, "likely": 1, "inconclusive": 0, "falsePositive": 5, "falsePositiveRate": 83.3, "confirmedOnlyPrecision": 0.0, "verdict": "no true positive; 5 of 6 are RegExp.exec at critical severity" },
+    { "rule": "remote-no-auth", "kind": "weakness", "severity": "high", "total": 31, "confirmed": 6, "likely": 0, "inconclusive": 2, "falsePositive": 23, "falsePositiveRate": 74.2, "confirmedOnlyPrecision": 20.7, "verdict": "text-presence test; a comment or a socket createServer() satisfies it" },
+    { "rule": "reads-credentials", "kind": "capability", "severity": "high", "total": 27, "confirmed": 5, "likely": 12, "inconclusive": 0, "falsePositive": 10, "falsePositiveRate": 37.0, "confirmedOnlyPrecision": 33.3, "verdict": "matches ~/.ssh in comments and in test fixtures as readily as in code" },
+    { "rule": "shell-exec", "kind": "weakness", "severity": "high", "total": 219, "confirmed": 83, "likely": 0, "inconclusive": 67, "falsePositive": 69, "falsePositiveRate": 31.5, "confirmedOnlyPrecision": 54.6, "verdict": "largest volume, biggest absolute noise (46 import lines, 16 RegExp.exec / db.exec), and 67 rows it cannot settle" },
+    { "rule": "public-bind", "kind": "capability", "severity": "medium", "total": 29, "confirmed": 23, "likely": 0, "inconclusive": 0, "falsePositive": 6, "falsePositiveRate": 20.7, "confirmedOnlyPrecision": 79.3, "verdict": "sound where it matches live code; 6 matches are doc comments" },
+    { "rule": "broad-fs-access", "kind": "weakness", "severity": "high", "total": 13, "confirmed": 0, "likely": 2, "inconclusive": 9, "falsePositive": 2, "falsePositiveRate": 15.4, "confirmedOnlyPrecision": 0.0, "verdict": "the React route path and Dependabot directory both read as roots; nothing confirmed" },
+    { "rule": "transport", "kind": "capability", "severity": "info", "total": 15, "confirmed": 13, "likely": 0, "inconclusive": 0, "falsePositive": 2, "falsePositiveRate": 13.3, "confirmedOnlyPrecision": 86.7, "verdict": "reliable as a descriptor of transport in use" },
+    { "rule": "dynamic-eval", "kind": "capability", "severity": "medium", "total": 14, "confirmed": 13, "likely": 0, "inconclusive": 0, "falsePositive": 1, "falsePositiveRate": 7.1, "confirmedOnlyPrecision": 92.9, "verdict": "reliable; eval and Function are rarely matched by accident" },
+    { "rule": "write-capability", "kind": "capability", "severity": "medium", "total": 222, "confirmed": 217, "likely": 0, "inconclusive": 0, "falsePositive": 5, "falsePositiveRate": 2.3, "confirmedOnlyPrecision": 97.7, "verdict": "the single most trustworthy rule; 217 of 222 confirmed, and 222 rows is a quarter of the whole sample" },
+    { "rule": "unpinned-dependency", "kind": "capability", "severity": "medium", "total": 51, "confirmed": 51, "likely": 0, "inconclusive": 0, "falsePositive": 0, "falsePositiveRate": 0.0, "confirmedOnlyPrecision": 100.0, "verdict": "exact; a caret range is a caret range" },
+    { "rule": "hidden-unicode", "kind": "capability", "severity": "medium", "total": 4, "confirmed": 4, "likely": 0, "inconclusive": 0, "falsePositive": 0, "falsePositiveRate": 0.0, "confirmedOnlyPrecision": 100.0, "verdict": "exact" },
+    { "rule": "transient-host", "kind": "capability", "severity": "medium", "total": 3, "confirmed": 3, "likely": 0, "inconclusive": 0, "falsePositive": 0, "falsePositiveRate": 0.0, "confirmedOnlyPrecision": 100.0, "verdict": "exact" }
+  ],
+  "unsettled": [
+    { "rule": "path-traversal", "total": 34, "confirmed": 0, "likely": 2, "inconclusive": 32, "falsePositive": 0, "note": "32 of 34 land on scripts and tests where a relative join is genuinely fine; the 2 likely rows are real service code. Zero confirmed means the rule currently cannot promote anything, and the two hand-found traversal bugs (MP-1, MP-2) were both missed entirely." },
+    { "rule": "object-merge", "total": 34, "confirmed": 0, "likely": 32, "inconclusive": 2, "falsePositive": 0, "note": "32 of 34 are Object.assign in test setup, which is a merge but never a prototype-pollution surface. Not wrong, just uninformative here." },
+    { "rule": "capability-mismatch", "total": 14, "confirmed": 0, "likely": 0, "inconclusive": 14, "falsePositive": 0, "note": "every row inconclusive, by design - it needs to resolve registration at runtime, which a regex cannot." },
+    { "rule": "weak-allowlist", "total": 4, "confirmed": 0, "likely": 0, "inconclusive": 4, "falsePositive": 0, "note": "all 4 are metacharacter-shape warnings on allowlists; none settled." },
+    { "rule": "outbound-network", "total": 95, "confirmed": 0, "likely": 0, "inconclusive": 92, "falsePositive": 3, "note": "92 of 95 inconclusive. As a capability descriptor it is fine; the word 'confirmed' never applies because a fetch URL is not a fact about reach without egress policy." }
+  ],
+  "lowVolume": [
+    { "rule": "hardcoded-secret", "total": 2, "likely": 2 },
+    { "rule": "hardcoded-credential-default", "total": 2, "likely": 2 },
+    { "rule": "install-script", "total": 6, "likely": 6 },
+    { "rule": "sensitive-fallback", "total": 3, "inconclusive": 3 },
+    { "rule": "unused-allowlist", "total": 1, "likely": 1 }
+  ],
+  "note2": "Two rules reached real bugs the rest of the sample did not: shell-exec fired on the ffmpeg and mcpserve sinks, and hardcoded-credential-default-style defaults exist in mcpserve. Both are covered under missed-patterns.json because the severity or the coverage was wrong, not because nothing fired."
+}

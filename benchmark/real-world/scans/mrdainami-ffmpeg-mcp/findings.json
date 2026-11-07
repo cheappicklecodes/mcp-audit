@@ -1,0 +1,169 @@
+{
+  "tool": "mcp-audit",
+  "version": "0.5.3",
+  "root": "src/mrdainami-ffmpeg-mcp",
+  "score": 69,
+  "grade": "C",
+  "filesScanned": 6,
+  "rulesRun": 33,
+  "counts": {
+    "critical": 1,
+    "high": 1,
+    "medium": 8,
+    "low": 1,
+    "info": 1
+  },
+  "truncated": false,
+  "unverified": 11,
+  "findings": [
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "critical",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "src/index.ts",
+      "line": 146,
+      "evidence": "const start = Date.now(); const child = spawn(args.command, { cwd, shell:",
+      "detail": "string shell, injection-prone"
+    },
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "src/index.ts",
+      "line": 19,
+      "evidence": "modelcontextprotocol/sdk/types.js\"; import { spawn } from \"node:child_process\"; import { mkdir, writeFile } from",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "package.json",
+      "line": 21,
+      "evidence": "@modelcontextprotocol/sdk: ^1.0.4",
+      "detail": "floating range"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "package.json",
+      "line": 22,
+      "evidence": "ffmpeg-static: ^5.2.0",
+      "detail": "floating range"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "package.json",
+      "line": 23,
+      "evidence": "ffprobe-static: ^3.1.0",
+      "detail": "floating range"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "package.json",
+      "line": 26,
+      "evidence": "@types/node: ^20.11.0",
+      "detail": "floating range"
+    },
+    {
+      "rule": "write-capability",
+      "title": "Can write or mutate files and state",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible.",
+      "fix": "Confine write roots, and prefer explicit overwrite semantics over silent replace.",
+      "file": "src/index.ts",
+      "line": 20,
+      "evidence": "from \"node:child_process\"; import { mkdir, writeFile } from \"node:fs/promises\"; import"
+    },
+    {
+      "rule": "write-capability",
+      "title": "Can write or mutate files and state",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "Read-plus-write is where mistakes become damage. Note whether writes are confined and whether they are reversible.",
+      "fix": "Confine write roots, and prefer explicit overwrite semantics over silent replace.",
+      "file": "src/index.ts",
+      "line": 213,
+      "evidence": "${res.statusText}`, }; } await writeFile(dest, res.body); return { ok"
+    },
+    {
+      "rule": "capability-mismatch",
+      "title": "Capability declaration does not match what the server serves",
+      "severity": "medium",
+      "confidence": "confirmed",
+      "why": "The capabilities block is the contract the host negotiates with. Declaring `tools: {}` and then answering `tools/list` means the client never agreed to tools, so list-change notifications go nowhere and some hosts keep a stale catalog. The reverse — advertising tools with no `tools/call` handler — gives the model a catalog it cannot invoke.",
+      "fix": "Declare what the server really serves: `capabilities: { tools: { listChanged: true } }`, and implement every tool listed.",
+      "file": "src/index.ts",
+      "line": 219,
+      "evidence": "\"dainami-ffmpeg-mcp\", version: \"0.1.4\" }, { capabilities: { tools: {} } }, ); server.setRequestHandler",
+      "detail": "declared empty, tools served anyway",
+      "location": {
+        "startOffset": 6905,
+        "endOffset": 6932,
+        "startLine": 219,
+        "startColumn": 5,
+        "endLine": 219,
+        "endColumn": 32
+      }
+    },
+    {
+      "rule": "hardcoded-credential-default",
+      "title": "Credential falls back to a baked-in default",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "`process.env.TOKEN || \"abc123\"` means the server works without configuration, which hides that it is running on a shared or demo credential.",
+      "fix": "Document the default, or fail loudly when the variable is missing.",
+      "file": "src/index.ts",
+      "line": 309,
+      "evidence": "console.error(`[dainami-ffmpeg-mcp] FFMPEG_MCP_WORKDIR raw: ${process.env.FFMPEG_MCP_WORKDIR ?? \"(unset)\"}`); console…"
+    },
+    {
+      "rule": "telemetry",
+      "title": "Analytics or telemetry SDK present",
+      "severity": "low",
+      "confidence": "likely",
+      "why": "Telemetry decides what leaves the machine before you have asked the tool anything.",
+      "fix": "Look for a documented off switch and confirm the endpoint.",
+      "file": "src/index.ts",
+      "line": 253,
+      "evidence": "segment",
+      "detail": "segment"
+    },
+    {
+      "rule": "transport",
+      "title": "Uses stdio transport",
+      "severity": "info",
+      "confidence": "likely",
+      "why": "Local stdio servers inherit your user account. There is no sandbox between the server and your files.",
+      "fix": "Prefer stdio for local work and HTTP with auth for remote.",
+      "file": "src/index.ts",
+      "line": 14,
+      "evidence": "StdioServerTransport",
+      "detail": "StdioServerTransport"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "repository": "portertech/filesystem-mcp-server",
+  "url": "https://github.com/portertech/filesystem-mcp-server",
+  "commit": "3b3e5a05d7d2bfb107dc9e7583315976cc8bf897",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "A",
+  "primaryLanguages": {
+    "Go": 33
+  },
+  "filesInTree": 43,
+  "filesScanned": 38,
+  "filesUnsupported": 5,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "A",
+    "score": 96,
+    "counts": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 2,
+      "info": 0
+    },
+    "findings": 2,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 0,
+    "likely": 0,
+    "inconclusive": 0,
+    "falsePositive": 2,
+    "weakness": 2,
+    "capability": 0
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

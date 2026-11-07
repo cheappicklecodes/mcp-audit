@@ -1,0 +1,43 @@
+{
+  "repository": "aj-geddes/fastfs-mcp",
+  "url": "https://github.com/aj-geddes/fastfs-mcp",
+  "commit": "bcbbc4d324e682c44ef6d644223f4de65b46394e",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "A",
+  "primaryLanguages": {
+    "Python": 5
+  },
+  "filesInTree": 18,
+  "filesScanned": 8,
+  "filesUnsupported": 10,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "C",
+    "score": 73,
+    "counts": {
+      "critical": 0,
+      "high": 5,
+      "medium": 3,
+      "low": 0,
+      "info": 0
+    },
+    "findings": 8,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 8,
+    "likely": 0,
+    "inconclusive": 0,
+    "falsePositive": 0,
+    "weakness": 5,
+    "capability": 3
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

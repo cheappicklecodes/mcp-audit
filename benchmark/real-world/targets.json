@@ -1,0 +1,278 @@
+{
+  "note": "Inventory of every repository in the evaluation, pinned to the exact commit that was read. Acquisition is `git clone --depth 1` plus checkout of the pinned commit; no dependency install, no build, and the server is never started. Group letters follow the brief: A = low-assurance community projects, B = established third-party projects, C = official reference code used as a control.",
+  "evaluatedAt": "2026-11-07",
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "commit": "35e3bbb",
+    "rulesRun": 33
+  },
+  "groups": {
+    "A": "Lower-assurance community-maintained MCP servers",
+    "B": "Established third-party MCP servers",
+    "C": "Official / reference implementations (controls)"
+  },
+  "targets": [
+    {
+      "repository": "MarkusPfundstein/cmd-line-executor-MCP",
+      "url": "https://github.com/MarkusPfundstein/cmd-line-executor-MCP",
+      "group": "A",
+      "license": "MIT License",
+      "commit": "26479b913ec8b9822fad0fcb0ee59375a30c1894",
+      "branch": "main",
+      "languages": {
+        "Python": 2
+      },
+      "filesInTree": 7,
+      "filesScanned": 3,
+      "grade": "A",
+      "score": 100,
+      "findings": 0,
+      "scan": "scans/MarkusPfundstein-cmd-line-executor-MCP/"
+    },
+    {
+      "repository": "aj-geddes/fastfs-mcp",
+      "url": "https://github.com/aj-geddes/fastfs-mcp",
+      "group": "A",
+      "license": "MIT License",
+      "commit": "bcbbc4d324e682c44ef6d644223f4de65b46394e",
+      "branch": "main",
+      "languages": {
+        "Python": 5
+      },
+      "filesInTree": 18,
+      "filesScanned": 8,
+      "grade": "C",
+      "score": 73,
+      "findings": 8,
+      "scan": "scans/aj-geddes-fastfs-mcp/"
+    },
+    {
+      "repository": "blazickjp/arxiv-mcp-server",
+      "url": "https://github.com/blazickjp/arxiv-mcp-server",
+      "group": "B",
+      "license": "Apache License",
+      "commit": "572e301bb3198962c025d5ed5e14becb86868daa",
+      "branch": "main",
+      "languages": {
+        "Python": 84,
+        "Shell": 2
+      },
+      "filesInTree": 115,
+      "filesScanned": 103,
+      "grade": "C",
+      "score": 72,
+      "findings": 45,
+      "scan": "scans/blazickjp-arxiv-mcp-server/"
+    },
+    {
+      "repository": "bytebase/dbhub",
+      "url": "https://github.com/bytebase/dbhub",
+      "group": "B",
+      "license": "MIT License",
+      "commit": "0b2532b26da6e31a88d9533b6958b346bb735640",
+      "branch": "main",
+      "languages": {
+        "TypeScript": 152,
+        "TSX": 76,
+        "JavaScript": 5
+      },
+      "filesInTree": 336,
+      "filesScanned": 259,
+      "grade": "D",
+      "score": 49,
+      "findings": 138,
+      "scan": "scans/bytebase-dbhub/"
+    },
+    {
+      "repository": "executeautomation/mcp-database-server",
+      "url": "https://github.com/executeautomation/mcp-database-server",
+      "group": "B",
+      "license": "MIT License",
+      "commit": "d6afa4be08eb05343195635fa9462746a6be3a59",
+      "branch": "main",
+      "languages": {
+        "TypeScript": 17,
+        "TSX": 3,
+        "JavaScript": 2,
+        "Shell": 1
+      },
+      "filesInTree": 79,
+      "filesScanned": 32,
+      "grade": "C",
+      "score": 70,
+      "findings": 25,
+      "scan": "scans/executeautomation-mcp-database-server/"
+    },
+    {
+      "repository": "javillegasna/filesystem",
+      "url": "https://github.com/javillegasna/filesystem",
+      "group": "A",
+      "license": "MIT License",
+      "commit": "a34ef2055e9db16d3d8f2b405c3605eb80c9d942",
+      "branch": "main",
+      "languages": {
+        "Python": 22
+      },
+      "filesInTree": 35,
+      "filesScanned": 26,
+      "grade": "A",
+      "score": 100,
+      "findings": 0,
+      "scan": "scans/javillegasna-filesystem/"
+    },
+    {
+      "repository": "mark-oori/mcpserve",
+      "url": "https://github.com/mark-oori/mcpserve",
+      "group": "A",
+      "license": "MIT License",
+      "commit": "b310fd5a2e772a41f9d9a2f32178705a315fb955",
+      "branch": "master",
+      "languages": {
+        "Python": 1,
+        "Shell": 1
+      },
+      "filesInTree": 11,
+      "filesScanned": 5,
+      "grade": "B",
+      "score": 81,
+      "findings": 4,
+      "scan": "scans/mark-oori-mcpserve/"
+    },
+    {
+      "repository": "modelcontextprotocol/python-sdk",
+      "url": "https://github.com/modelcontextprotocol/python-sdk",
+      "group": "C",
+      "license": "MIT License",
+      "commit": "77001c96f9507be0f4d009b83210a384a5e08bda",
+      "branch": "main",
+      "languages": {
+        "Python": 870,
+        "JavaScript": 6,
+        "Shell": 5
+      },
+      "filesInTree": 1726,
+      "filesScanned": 938,
+      "grade": "C",
+      "score": 68,
+      "findings": 103,
+      "scan": "scans/modelcontextprotocol-python-sdk/"
+    },
+    {
+      "repository": "modelcontextprotocol/servers",
+      "url": "https://github.com/modelcontextprotocol/servers",
+      "group": "C",
+      "license": "The MCP project is undergoing a licensing transition from the MIT License to the Apache License, Version 2.0 (\"Apache-2.0\"). All new code and specification contributions to the project are licensed under Apache-2.0. Documentation contributions (excluding specifications) are licensed under CC-BY-4.0.",
+      "commit": "36380287ed3b15d115b55f546617d723072b1296",
+      "branch": "main",
+      "languages": {
+        "TypeScript": 146,
+        "JavaScript": 81,
+        "Python": 48
+      },
+      "filesInTree": 390,
+      "filesScanned": 328,
+      "grade": "F",
+      "score": 12,
+      "findings": 494,
+      "scan": "scans/modelcontextprotocol-servers/"
+    },
+    {
+      "repository": "mrdainami/ffmpeg-mcp",
+      "url": "https://github.com/mrdainami/ffmpeg-mcp",
+      "group": "A",
+      "license": "MIT License",
+      "commit": "e95d87ec33b31df1a46a7fe3bad211bdbac24da7",
+      "branch": "main",
+      "languages": {
+        "TypeScript": 2
+      },
+      "filesInTree": 9,
+      "filesScanned": 6,
+      "grade": "C",
+      "score": 69,
+      "findings": 12,
+      "scan": "scans/mrdainami-ffmpeg-mcp/"
+    },
+    {
+      "repository": "portertech/filesystem-mcp-server",
+      "url": "https://github.com/portertech/filesystem-mcp-server",
+      "group": "A",
+      "license": "MIT License",
+      "commit": "3b3e5a05d7d2bfb107dc9e7583315976cc8bf897",
+      "branch": "main",
+      "languages": {
+        "Go": 33
+      },
+      "filesInTree": 43,
+      "filesScanned": 38,
+      "grade": "A",
+      "score": 96,
+      "findings": 2,
+      "scan": "scans/portertech-filesystem-mcp-server/"
+    },
+    {
+      "repository": "rira100000000/debug-mcp",
+      "url": "https://github.com/rira100000000/debug-mcp",
+      "group": "B",
+      "license": "MIT License",
+      "commit": "d0b90684e44eaaa269d9f5c9eaec565042647538",
+      "branch": "main",
+      "languages": {
+        "Ruby": 121,
+        "Shell": 2,
+        "JavaScript": 1
+      },
+      "filesInTree": 175,
+      "filesScanned": 130,
+      "grade": "C",
+      "score": 71,
+      "findings": 40,
+      "scan": "scans/rira100000000-debug-mcp/"
+    },
+    {
+      "repository": "sonirico/mcp-shell",
+      "url": "https://github.com/sonirico/mcp-shell",
+      "group": "B",
+      "license": "GNU GENERAL PUBLIC LICENSE",
+      "commit": "b358b02bcad8509353dacdeb39762801433fea42",
+      "branch": "master",
+      "languages": {
+        "Go": 22
+      },
+      "filesInTree": 40,
+      "filesScanned": 31,
+      "grade": "B",
+      "score": 82,
+      "findings": 8,
+      "scan": "scans/sonirico-mcp-shell/"
+    },
+    {
+      "repository": "webconsulting/mcp-server-wsl-filesystem",
+      "url": "https://github.com/webconsulting/mcp-server-wsl-filesystem",
+      "group": "A",
+      "license": "MIT License",
+      "commit": "0f0a0bae128b068a5044b2bcccbc8040943c2353",
+      "branch": "main",
+      "languages": {
+        "TypeScript": 1
+      },
+      "filesInTree": 8,
+      "filesScanned": 4,
+      "grade": "C",
+      "score": 65,
+      "findings": 11,
+      "scan": "scans/webconsulting-mcp-server-wsl-filesystem/"
+    }
+  ],
+  "exclusions": [
+    {
+      "what": "Servers whose only entry point is a hosted/remote endpoint with no reader-visible source",
+      "why": "this evaluation is static source reading only"
+    },
+    {
+      "what": "Repositories that vendor a full framework or need a monorepo build to identify the entry point",
+      "why": "the scanner reads files, so a build-only entry point cannot be assessed without one"
+    }
+  ]
+}

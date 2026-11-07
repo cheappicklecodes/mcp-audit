@@ -1,0 +1,45 @@
+{
+  "repository": "rira100000000/debug-mcp",
+  "url": "https://github.com/rira100000000/debug-mcp",
+  "commit": "d0b90684e44eaaa269d9f5c9eaec565042647538",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "B",
+  "primaryLanguages": {
+    "Ruby": 121,
+    "Shell": 2,
+    "JavaScript": 1
+  },
+  "filesInTree": 175,
+  "filesScanned": 130,
+  "filesUnsupported": 45,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "C",
+    "score": 71,
+    "counts": {
+      "critical": 0,
+      "high": 15,
+      "medium": 25,
+      "low": 0,
+      "info": 0
+    },
+    "findings": 40,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 24,
+    "likely": 0,
+    "inconclusive": 16,
+    "falsePositive": 0,
+    "weakness": 15,
+    "capability": 25
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

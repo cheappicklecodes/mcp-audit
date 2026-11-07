@@ -13,11 +13,50 @@ You install an MCP server and hand it your shell, your files and your tokens. It
 
 `mcp-audit` reads both — the code and the descriptions — and tells you what the thing can actually reach.
 
+A lightweight static scanner for MCP servers: tool-description poisoning, unsafe shell execution, filesystem traversal, exposed credentials, capability mismatches and the rest of the shape that makes an MCP server dangerous to install.
+
 ```bash
 npx github:cheappicklecodes/mcp-audit .
 ```
 
 Zero dependencies. One command. No account. Nothing is executed and nothing phones home.
+
+---
+
+## Real-World Security Evaluation
+
+**Tested against independently maintained MCP implementations, with an emphasis on community projects.**
+
+Anchors in a fixture prove nothing about code someone else wrote. So the scanner was pointed at fourteen public MCP servers it had never seen, pinned to exact commits, and then every one of its findings was read back against the source.
+
+| | |
+| --- | --- |
+| Repositories evaluated | 14 — 7 community, 5 established, 2 official controls |
+| Files scanned | 1,911 (35,174 code lines) |
+| Findings produced | 890 |
+| Confirmed / likely / inconclusive | 422 / 61 / 225 |
+| False positives | 182 |
+| Confirmed-only precision, all findings | **69.9%** |
+| Confirmed-only precision, weakness findings only | **37.5%** |
+| Independently verified recall | **not reported** |
+
+The gap between those two precisions is the honest headline: most output is a true capability descriptor, and stripped of those the scanner is right slightly more than a third of the time. Recall is left blank on purpose — nobody holds the true bug list for these repositories, so any recall figure would be invented. The seven misses that were found by reading are a lower bound, not a rate.
+
+| Group | Repos | Findings | Precision (all) | Precision (weakness only) |
+| --- | ---: | ---: | ---: | ---: |
+| A — community | 7 | 37 | 83.3% | 58.3% |
+| B — established | 5 | 256 | 65.8% | 26.0% |
+| C — official controls | 2 | 597 | 70.4% | 39.2% |
+
+The sample deliberately leans on lesser-known, independently maintained servers, because that is where the scanner gets used and where there is least review. A missing SECURITY.md or a single maintainer is a selection signal, not a finding — the repositories are not ranked and none is called unsafe.
+
+**Method:** static source read only. No target was installed, built or executed; no rule was changed for the run. Review was AI-assisted against the source, not an independent human second pass.
+
+Evaluation date 2026-11-07 · scanner v0.5.3.
+
+- [Real-world benchmark and full results](benchmark/real-world/README.md)
+- [Method, sampling and denominators](benchmark/real-world/methodology.md)
+- [Executive report](benchmark/real-world/reports/executive-summary.md)
 
 ---
 
@@ -192,7 +231,9 @@ mcp-audit . --rules-from ./my-rules.js
 
 ## Benchmark
 
-`benchmark/` is a corpus of deliberately shaped servers — a vulnerability, its safe twin and a bypass variant for every rule family — scored in `npm test` and in CI.
+Two corpora, kept apart on purpose.
+
+**Synthetic** — `benchmark/` is a corpus of deliberately shaped servers — a vulnerability, its safe twin and a bypass variant for every rule family — scored in `npm test` and in CI.
 
 ```bash
 npm run bench                # report
@@ -229,7 +270,9 @@ Sinks are anchored with `/* @mcpbench:<id>:start */`, matched one-to-one, and ev
 
 A broken benchmark is a harness failure, never a quiet zero.
 
-Every report prints its own provenance above the numbers. The fixtures and the rules come from the same hands, there is no independent corpus and no held-out split — so `100%` here means *no regression against shapes the rules were written to see*. It does not mean solved. `benchmark/README.md` keeps the ledger of what is expected to be missed.
+Every report prints its own provenance above the numbers. In the synthetic corpus the fixtures and the rules come from the same hands, so `100%` there means *no regression against shapes the rules were written to see*. It does not mean solved. `benchmark/README.md` keeps the ledger of what is expected to be missed.
+
+**Real-world** — `benchmark/real-world/` is the fourteen-repository evaluation above: code written by other people, pinned, scanned, and every finding classified by hand. The synthetic corpus measures regression; the real-world set measures whether the rules survive contact with strangers. Neither number is a recall figure.
 
 ## Limits
 
@@ -237,6 +280,9 @@ Every report prints its own provenance above the numbers. The fixtures and the r
 - **No sandboxing.** It reports blast radius; it does not contain it.
 - **One hop of provenance.** A value is followed from a local binding to a sink, not through helper functions or branches. Logic bugs and business-logic exfiltration get past it.
 - **Patterns, mostly.** Findings say so. A high grade is "nothing obvious", not "safe".
+- **Uneven against real code.** 37.5% confirmed-only precision on weakness findings, and seven known misses across fourteen repositories. An `A` on an unfamiliar server means the scanner ran out of shapes, not that the server is clean.
+
+Because of the third limit, the common miss is a path clamped by a helper in another module, or a command assembled by a wrapper: the call site looks clean and the guard is one function away.
 
 The short version: it narrows what you have to read. It does not read for you.
 

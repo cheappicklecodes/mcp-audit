@@ -1,0 +1,45 @@
+{
+  "repository": "bytebase/dbhub",
+  "url": "https://github.com/bytebase/dbhub",
+  "commit": "0b2532b26da6e31a88d9533b6958b346bb735640",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "B",
+  "primaryLanguages": {
+    "TypeScript": 152,
+    "TSX": 76,
+    "JavaScript": 5
+  },
+  "filesInTree": 336,
+  "filesScanned": 259,
+  "filesUnsupported": 77,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "D",
+    "score": 49,
+    "counts": {
+      "critical": 1,
+      "high": 71,
+      "medium": 62,
+      "low": 4,
+      "info": 0
+    },
+    "findings": 138,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 51,
+    "likely": 23,
+    "inconclusive": 20,
+    "falsePositive": 44,
+    "weakness": 66,
+    "capability": 72
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

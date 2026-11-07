@@ -1,0 +1,43 @@
+{
+  "repository": "webconsulting/mcp-server-wsl-filesystem",
+  "url": "https://github.com/webconsulting/mcp-server-wsl-filesystem",
+  "commit": "0f0a0bae128b068a5044b2bcccbc8040943c2353",
+  "branch": "main",
+  "license": "MIT License",
+  "group": "A",
+  "primaryLanguages": {
+    "TypeScript": 1
+  },
+  "filesInTree": 8,
+  "filesScanned": 4,
+  "filesUnsupported": 4,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "C",
+    "score": 65,
+    "counts": {
+      "critical": 0,
+      "high": 4,
+      "medium": 6,
+      "low": 0,
+      "info": 1
+    },
+    "findings": 11,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 5,
+    "likely": 1,
+    "inconclusive": 4,
+    "falsePositive": 1,
+    "weakness": 5,
+    "capability": 6
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

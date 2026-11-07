@@ -1,0 +1,43 @@
+{
+  "repository": "sonirico/mcp-shell",
+  "url": "https://github.com/sonirico/mcp-shell",
+  "commit": "b358b02bcad8509353dacdeb39762801433fea42",
+  "branch": "master",
+  "license": "GNU GENERAL PUBLIC LICENSE",
+  "group": "B",
+  "primaryLanguages": {
+    "Go": 22
+  },
+  "filesInTree": 40,
+  "filesScanned": 31,
+  "filesUnsupported": 9,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "B",
+    "score": 82,
+    "counts": {
+      "critical": 0,
+      "high": 5,
+      "medium": 3,
+      "low": 0,
+      "info": 0
+    },
+    "findings": 8,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 3,
+    "likely": 0,
+    "inconclusive": 4,
+    "falsePositive": 1,
+    "weakness": 5,
+    "capability": 3
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

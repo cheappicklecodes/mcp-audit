@@ -1,0 +1,68 @@
+{
+  "tool": "mcp-audit",
+  "version": "0.5.3",
+  "root": "src/mark-oori-mcpserve",
+  "score": 81,
+  "grade": "B",
+  "filesScanned": 5,
+  "rulesRun": 33,
+  "counts": {
+    "critical": 0,
+    "high": 1,
+    "medium": 3,
+    "low": 0,
+    "info": 0
+  },
+  "truncated": false,
+  "unverified": 4,
+  "findings": [
+    {
+      "rule": "shell-exec",
+      "title": "Executes shell commands",
+      "severity": "high",
+      "confidence": "likely",
+      "why": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary.",
+      "fix": "Use an allowlist, avoid `shell: true`, and quote interpolated values.",
+      "file": "main.py",
+      "line": 38,
+      "evidence": "\"\"\"Execute a shell command\"\"\" return subprocess.check_output(command, shell=True).decode",
+      "detail": "process spawn"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "requirements.txt",
+      "line": 1,
+      "evidence": "langchain-mcp-adapters",
+      "detail": "no exact pin"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "requirements.txt",
+      "line": 2,
+      "evidence": "httpx",
+      "detail": "no exact pin"
+    },
+    {
+      "rule": "unpinned-dependency",
+      "title": "Dependency ranges that can float",
+      "severity": "medium",
+      "confidence": "likely",
+      "why": "A caret or star range means today’s install and tomorrow’s install can be different code. For a component that holds credentials and runs commands, that is unearned trust.",
+      "fix": "Pin exact versions, or at minimum commit a lockfile and install with `npm ci`.",
+      "file": "requirements.txt",
+      "line": 3,
+      "evidence": "python-dotenv",
+      "detail": "no exact pin"
+    }
+  ]
+}

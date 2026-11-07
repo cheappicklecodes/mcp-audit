@@ -1,0 +1,44 @@
+{
+  "repository": "mark-oori/mcpserve",
+  "url": "https://github.com/mark-oori/mcpserve",
+  "commit": "b310fd5a2e772a41f9d9a2f32178705a315fb955",
+  "branch": "master",
+  "license": "MIT License",
+  "group": "A",
+  "primaryLanguages": {
+    "Python": 1,
+    "Shell": 1
+  },
+  "filesInTree": 11,
+  "filesScanned": 5,
+  "filesUnsupported": 6,
+  "scanner": {
+    "tool": "mcp-audit",
+    "version": "0.5.3",
+    "rules": 33,
+    "exitCode": 0
+  },
+  "result": {
+    "grade": "B",
+    "score": 81,
+    "counts": {
+      "critical": 0,
+      "high": 1,
+      "medium": 3,
+      "low": 0,
+      "info": 0
+    },
+    "findings": 4,
+    "truncated": false
+  },
+  "classification": {
+    "confirmed": 4,
+    "likely": 0,
+    "inconclusive": 0,
+    "falsePositive": 0,
+    "weakness": 1,
+    "capability": 3
+  },
+  "acquisition": "git clone --depth 1 --filter=blob:none, checked out at the pinned commit; no dependency install, no build, no execution",
+  "scannedAt": "2026-11-07"
+}

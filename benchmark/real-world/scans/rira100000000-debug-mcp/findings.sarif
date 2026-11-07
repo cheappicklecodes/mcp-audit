@@ -1,0 +1,998 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "mcp-audit",
+          "version": "0.5.3",
+          "informationUri": "https://github.com/cheappicklecodes/mcp-audit",
+          "rules": [
+            {
+              "id": "shell-exec",
+              "name": "Executes shell commands",
+              "shortDescription": {
+                "text": "Executes shell commands"
+              },
+              "fullDescription": {
+                "text": "Shell access turns a data source into an actor. Once the model can pass a string to a shell, argument injection becomes command injection and the tool description becomes the trust boundary."
+              },
+              "help": {
+                "text": "Use an allowlist, avoid `shell: true`, and quote interpolated values."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "broad-fs-access",
+              "name": "Server can reach the whole filesystem or home directory",
+              "shortDescription": {
+                "text": "Server can reach the whole filesystem or home directory"
+              },
+              "fullDescription": {
+                "text": "A server scoped to a project can be compromised for the cost of the project. One scoped to `~` or `/` can read every repo, key and note on the machine — including files it never advertised."
+              },
+              "help": {
+                "text": "Scope roots to the directories the server actually serves."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "dynamic-eval",
+              "name": "Evaluates dynamic code",
+              "shortDescription": {
+                "text": "Evaluates dynamic code"
+              },
+              "fullDescription": {
+                "text": "`eval`, `new Function` and `pickle.loads` execute data as code. Whatever supplies the data supplies the code."
+              },
+              "help": {
+                "text": "Prefer parsing over evaluation; for pickle, note that it is not safe on untrusted input."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "public-bind",
+              "name": "Listens on all interfaces",
+              "shortDescription": {
+                "text": "Listens on all interfaces"
+              },
+              "fullDescription": {
+                "text": "`0.0.0.0` exposes the port to the LAN and any container network, not just this machine."
+              },
+              "help": {
+                "text": "Bind `127.0.0.1` unless remote access is the point."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "outbound-network",
+              "name": "Makes outbound network calls",
+              "shortDescription": {
+                "text": "Makes outbound network calls"
+              },
+              "fullDescription": {
+                "text": "An MCP server with data access and an outbound socket can ship that data anywhere. Worth knowing which endpoints, and whether a local-first tool is quietly phoning home."
+              },
+              "help": {
+                "text": "Confirm the endpoint. For privacy-sensitive servers prefer opt-out telemetry or none."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — s*\\(/, \"system()\"], [/\\bexec\\s*\\(/, \"exec()\"], [/\\bspawn\\s*\\(/, \"spawn()\"]"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/code_safety_analyzer.rb"
+                },
+                "region": {
+                  "startLine": 14
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — bexec\\s*\\(/, \"exec()\"], [/\\bspawn\\s*\\(/, \"spawn()\"], [/`[^`]+`/, \"backtick command\""
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/code_safety_analyzer.rb"
+                },
+                "region": {
+                  "startLine": 15
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — Edit) instead - System commands: system(), exec(), backtick, %x{}, Open3, spawn \\"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/server.rb"
+                },
+                "region": {
+                  "startLine": 167
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — stderr_tmpfile.close pid = spawn(*cmd, out: stdout_path, err: stderr_path"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/tools/run_script.rb"
+                },
+                "region": {
+                  "startLine": 96
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — include(\"system()\") end it \"detects exec()\" do warnings = described_class.analyze"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/code_safety_analyzer_spec.rb"
+                },
+                "region": {
+                  "startLine": 62
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — do warnings = described_class.analyze('exec(\"/bin/sh\")') expect(warnings.length"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/code_safety_analyzer_spec.rb"
+                },
+                "region": {
+                  "startLine": 63
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — expect(warnings.first[:matches]).to include(\"exec()\") end it \"detects backtick"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/code_safety_analyzer_spec.rb"
+                },
+                "region": {
+                  "startLine": 65
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Executes shell commands — include(\"IO.popen\") end it \"detects spawn()\" do warnings = described_class.analyze"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "process spawn"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/code_safety_analyzer_spec.rb"
+                },
+                "region": {
+                  "startLine": 92
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "broad-fs-access",
+          "level": "error",
+          "message": {
+            "text": "Server can reach the whole filesystem or home directory — path: /"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "broad root"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/debug_client_spec.rb"
+                },
+                "region": {
+                  "startLine": 774
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "broad-fs-access",
+          "level": "error",
+          "message": {
+            "text": "Server can reach the whole filesystem or home directory — path: /"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "broad root"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/debug_client_spec.rb"
+                },
+                "region": {
+                  "startLine": 836
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "broad-fs-access",
+          "level": "error",
+          "message": {
+            "text": "Server can reach the whole filesystem or home directory — path: /"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "broad root"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/debug_client_spec.rb"
+                },
+                "region": {
+                  "startLine": 884
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "broad-fs-access",
+          "level": "error",
+          "message": {
+            "text": "Server can reach the whole filesystem or home directory — path: /"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "broad root"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/debug_client_spec.rb"
+                },
+                "region": {
+                  "startLine": 1068
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "broad-fs-access",
+          "level": "error",
+          "message": {
+            "text": "Server can reach the whole filesystem or home directory — path: /"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "broad root"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/event_formatter_spec.rb"
+                },
+                "region": {
+                  "startLine": 130
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "broad-fs-access",
+          "level": "error",
+          "message": {
+            "text": "Server can reach the whole filesystem or home directory — path: /"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "broad root"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/tools/connect_spec.rb"
+                },
+                "region": {
+                  "startLine": 782
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "broad-fs-access",
+          "level": "error",
+          "message": {
+            "text": "Server can reach the whole filesystem or home directory — path: /"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "broad root"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/tools/trigger_request_spec.rb"
+                },
+                "region": {
+                  "startLine": 1095
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — installs against real Rails and subscribes. eval(DebugMcp::NotificationsSubscriber::INJECTION_CODE"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "examples/rails_test_app/smoke_test.rb"
+                },
+                "region": {
+                  "startLine": 42
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — buffer.subscriptions.empty?, \"uninstall clears subscriptions\") eval(DebugMcp::NotificationsSubscriber::INJECTION_CODE"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "examples/rails_test_app/smoke_test.rb"
+                },
+                "region": {
+                  "startLine": 49
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — RUBY_DEBUG_OPEN=true - RUBY_DEBUG_HOST=0.0.0.0 - RUBY_DEBUG_PORT=12345"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "examples/rails_test_app/testapp/docker-compose.yml"
+                },
+                "region": {
+                  "startLine": 9
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — \"docker-entrypoint.sh\"] CMD [\"bin/rails\", \"server\", \"-b\", \"0.0.0.0\"]"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "examples/rails_test_app/testapp/Dockerfile"
+                },
+                "region": {
+                  "startLine": 23
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — cmd = \"p begin; require 'base64'; eval(::Base64.decode64('#{encoded}').force_encoding"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/notifications_subscriber.rb"
+                },
+                "region": {
+                  "startLine": 278
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — UTF_8)) command = \"require 'base64'; eval(::Base64.decode64('#{encoded}').force_encoding"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/rails_helper.rb"
+                },
+                "region": {
+                  "startLine": 44
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — \"$__debug_mcp_err=nil; p(begin; eval(#{code.gsub(\"\\n\", \";\").inspect}); \""
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/tools/evaluate_code.rb"
+                },
+                "region": {
+                  "startLine": 180
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — code.encode(Encoding::UTF_8)) inner = \"eval(::Base64.decode64('#{encoded}').force_encoding"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/tools/evaluate_code.rb"
+                },
+                "region": {
+                  "startLine": 237
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — RUBY_DEBUG_OPEN=true -e RUBY_DEBUG_HOST=0.0.0.0 \" \\ \"-e RUBY_DEBUG_PORT"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/tools/list_debug_sessions.rb"
+                },
+                "region": {
+                  "startLine": 35
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — script) cmd = \"require 'base64'; eval(::Base64.decode64('#{encoded}').force_encoding"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/debug_mcp/tools/rails_mail_deliveries.rb"
+                },
+                "region": {
+                  "startLine": 115
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "outbound-network",
+          "level": "warning",
+          "message": {
+            "text": "Makes outbound network calls — example.com"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "example.com"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/code_safety_analyzer_spec.rb"
+                },
+                "region": {
+                  "startLine": 273
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — |cmd| expect(cmd).to include(\"eval(::Base64.decode64(\") \":debug_mcp_subscriber_ok\""
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/notifications_subscriber_spec.rb"
+                },
+                "region": {
+                  "startLine": 21
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — end end def inject! eval(described_class::INJECTION_CODE) # rubocop"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/notifications_subscriber_spec.rb"
+                },
+                "region": {
+                  "startLine": 210
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — Server.new(transport: \"http\", port: 8080, host: \"0.0.0.0\") expect(server).to"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/server_spec.rb"
+                },
+                "region": {
+                  "startLine": 95
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — Thread.current[:_debug_mcp_event_source]; nil\" eval(described_class.wrap(outer_block))"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/source_tagging_spec.rb"
+                },
+                "region": {
+                  "startLine": 32
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — described_class.wrap(\"42\") expect(eval(wrapped)).to eq(42) end it"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/source_tagging_spec.rb"
+                },
+                "region": {
+                  "startLine": 46
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — _debug_mcp_event_source] = :outer_value eval(described_class.wrap(\"nil\")) expect"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/source_tagging_spec.rb"
+                },
+                "region": {
+                  "startLine": 51
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "dynamic-eval",
+          "level": "warning",
+          "message": {
+            "text": "Evaluates dynamic code — _debug_mcp_event_source] = nil observed = nil eval(described_class.wrap(\"observed = Thread.current"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/source_tagging_spec.rb"
+                },
+                "region": {
+                  "startLine": 60
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — \"RUBY_DEBUG_OPEN=true\", \"RUBY_DEBUG_HOST=0.0.0.0\", \"RUBY_DEBUG_PORT"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/tcp_session_discovery_spec.rb"
+                },
+                "region": {
+                  "startLine": 33
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — \"RUBY_DEBUG_OPEN=true\", \"RUBY_DEBUG_HOST=0.0.0.0\", \"RUBY_DEBUG_PORT=12345\""
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/tcp_session_discovery_spec.rb"
+                },
+                "region": {
+                  "startLine": 269
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "outbound-network",
+          "level": "warning",
+          "message": {
+            "text": "Makes outbound network calls — example.com"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "example.com"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/tools/evaluate_code_spec.rb"
+                },
+                "region": {
+                  "startLine": 321
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "outbound-network",
+          "level": "warning",
+          "message": {
+            "text": "Makes outbound network calls — localhost:3000"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "localhost:3000"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/tools/trigger_request_spec.rb"
+                },
+                "region": {
+                  "startLine": 1106
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "outbound-network",
+          "level": "warning",
+          "message": {
+            "text": "Makes outbound network calls — localhost:3000"
+          },
+          "properties": {
+            "confidence": "likely",
+            "detail": "localhost:3000"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_mcp/tools/trigger_request_spec.rb"
+                },
+                "region": {
+                  "startLine": 1138
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — .to eq({ \"RUBY_DEBUG_HOST\" => \"0.0.0.0\", \"RUBY_DEBUG_PORT\" =>"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_rails_spec.rb"
+                },
+                "region": {
+                  "startLine": 137
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "public-bind",
+          "level": "warning",
+          "message": {
+            "text": "Listens on all interfaces — .to eq({ \"RUBY_DEBUG_HOST\" => \"0.0.0.0\", \"RUBY_DEBUG_PORT\" =>"
+          },
+          "properties": {
+            "confidence": "likely"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "spec/debug_rails_spec.rb"
+                },
+                "region": {
+                  "startLine": 145
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
