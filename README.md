@@ -73,11 +73,13 @@ $ mcp-audit ./filesystem-mcp
 ## Install
 
 ```bash
-npx github:cheappicklecodes/mcp-audit .   # run straight from the repo
+npx github:cheappicklecodes/mcp-audit#v0.5.2 .   # pinned to a release tag
 git clone https://github.com/cheappicklecodes/mcp-audit && npm link   # or keep it
 ```
 
 Runs on Node 18 and up.
+
+The GitHub form executes whatever the ref names, so it is pinned to a tag: a scan you can reproduce next month is worth more than one that silently follows the default branch. Drop the `#v0.5.2` for the tip of the branch, or substitute a commit SHA when you need an exact one.
 
 The package is named `mcpaudit` and the command it installs is `mcp-audit`; the bare name on npm was taken by an unrelated placeholder. It is not on the npm registry yet, so use the GitHub form above — `npx mcpaudit` will start working once it is published.
 
@@ -119,13 +121,13 @@ Keys: `exclude`, `include`, `disable`, `only`, `minSeverity`, `failOn`. CLI flag
 ### In CI
 
 ```yaml
-- run: npx github:cheappicklecodes/mcp-audit . --fail-on critical
+- run: npx github:cheappicklecodes/mcp-audit#v0.5.2 . --fail-on critical
 ```
 
 Or feed GitHub code scanning:
 
 ```yaml
-- run: npx github:cheappicklecodes/mcp-audit . --format sarif > audit.sarif
+- run: npx github:cheappicklecodes/mcp-audit#v0.5.2 . --format sarif > audit.sarif
 - uses: github/codeql-action/upload-sarif@v4
   with: { sarif_file: audit.sarif }
 ```

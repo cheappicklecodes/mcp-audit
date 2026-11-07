@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.2
+
+The benchmark harness no longer trusts a directory tree it did not write.
+
+`caseDirs()`, `sourceFiles()` and `rawFiles()` used `statSync()`, which follows symbolic links. Two consequences, both reachable from an untrusted fork:
+
+- a link back to an ancestor recurses until the stack runs out, so a two-line contribution can hang CI;
+- a link out of the corpus pulls in bytes the lock never hashed, so the score is computed over content the digest does not describe.
+
+Every entry is now `lstat`ed by one shared helper and any symlink is a malformed harness (exit `2`, reported with its relative path) rather than a silently followed one. Separately, a subdirectory inside a case was previously skipped by the file lists while remaining unhashed; nesting is now also rejected, with the reason in the message.
+
+Three regression tests spawn the CLI against a corpus carrying a junction to a parent, a junction outside the tree, and a nested directory, and pin exit `2` for each.
+
+Also in this release: the README install command is pinned to a release tag instead of the moving default branch, and `SECURITY.md` records what to do about a credential pasted into a thread.
+
 ## 0.5.1
 
 The benchmark can no longer be weakened quietly.

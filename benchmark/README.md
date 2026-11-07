@@ -46,6 +46,16 @@ cases/<family>/<name>/
 
 Markers are masked to spaces before scanning, so they never shift a finding. A negative case carries `"expectedFindings": []` and still needs a source file.
 
+A case is **flat**. A subdirectory inside it is rejected rather than skipped, because the lock hashes case bytes by name and a nested tree it does not read would be a hole the digest cannot see.
+
+**Symlinks are rejected anywhere in the corpus**, in case discovery and in the file lists. `statSync` follows links, so a link back to an ancestor recurses until the stack runs out and a link out of the tree pulls in files that were never locked. Every entry is `lstat`ed instead, and a link is a hard error:
+
+```
+error: symlink not permitted at path/junction; bytes are not hashed
+```
+
+That matters most in CI, where the corpus arrives from an untrusted fork. A contributor's symlink is not silently trusted to point somewhere sane; it is a malformed harness (exit `2`) until it is replaced by a real directory.
+
 Rejected as malformed: unknown `family`, unknown `rule`, unknown `severity`, `caseType` outside `positive|negative|bypass`, an `id` that disagrees with the directory, duplicate finding ids, a reused marker, a marker that is never closed or is empty, an expectation on a `negative` case, and **two anchors for the same rule overlapping in one file** (overlap makes a match ambiguous, so it is refused rather than guessed at).
 
 ## Three measurements, not one score

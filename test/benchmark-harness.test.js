@@ -181,6 +181,34 @@ test("a negative case carrying an expectation exits 2", () => {
   });
 });
 
+test("a symlink back to a parent directory exits 2", () => {
+  withSandbox((dir) => {
+    const target = path.join(dir, "benchmark", "cases");
+    fs.symlinkSync(target, path.join(target, "loop"), "junction");
+    const { code, text } = bench(dir);
+    assert.equal(code, 2);
+    assert.match(text, /symlink not permitted/);
+  });
+});
+
+test("a symlink pointing outside the corpus exits 2", () => {
+  withSandbox((dir) => {
+    fs.symlinkSync(dir, path.join(dir, "benchmark", "cases", "outside"), "junction");
+    const { code, text } = bench(dir);
+    assert.equal(code, 2);
+    assert.match(text, /symlink not permitted/);
+  });
+});
+
+test("a nested directory inside a case exits 2", () => {
+  withSandbox((dir) => {
+    fs.mkdirSync(path.join(dir, "benchmark", "cases", "shell", "literal", "extra"));
+    const { code, text } = bench(dir);
+    assert.equal(code, 2);
+    assert.match(text, /nested directory/);
+  });
+});
+
 test("overlapping anchors for one rule exit 2", () => {
   withSandbox((dir) => {
     edit(dir, "path/join-bare/index.ts", (t) => t.replace(

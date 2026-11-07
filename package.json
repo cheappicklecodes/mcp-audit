@@ -1,6 +1,6 @@
 {
   "name": "mcpaudit",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Security linter for MCP servers: prompt injection, over-broad scopes, unpinned deps, exfiltration shapes.",
   "type": "module",
   "bin": {
@@ -14,7 +14,8 @@
     "src",
     "README.md",
     "LICENSE",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "SECURITY.md"
   ],
   "engines": {
     "node": ">=18"

@@ -17,11 +17,24 @@ class Integrity extends Error {}
 
 const sha256 = (data) => crypto.createHash('sha256').update(data).digest('hex');
 
+function entries(dir) {
+  return fs
+    .readdirSync(dir)
+    .sort()
+    .map((entry) => {
+      const full = path.join(dir, entry);
+      const stat = fs.lstatSync(full);
+      if (stat.isSymbolicLink()) {
+        throw new Malformed(`symlink not permitted at ${path.relative(CASES, full) || entry}; bytes are not hashed`);
+      }
+      return { entry, full, isDir: stat.isDirectory() };
+    });
+}
+
 function caseDirs(dir) {
   const out = [];
-  for (const entry of fs.readdirSync(dir).sort()) {
-    const full = path.join(dir, entry);
-    if (!fs.statSync(full).isDirectory()) continue;
+  for (const { full, isDir } of entries(dir)) {
+    if (!isDir) continue;
     if (fs.existsSync(path.join(full, 'expected.json'))) out.push(full);
     else out.push(...caseDirs(full));
   }
@@ -61,9 +74,11 @@ function maskMarkers(source) {
 
 function sourceFiles(dir) {
   const out = [];
-  for (const entry of fs.readdirSync(dir).sort()) {
+  for (const { entry, isDir, full } of entries(dir)) {
     if (entry === 'expected.json') continue;
-    if (!fs.statSync(path.join(dir, entry)).isFile()) continue;
+    if (isDir) {
+      throw new Malformed(`nested directory ${entry} inside a case; flatten it or it is not hashed`);
+    }
     out.push(entry);
   }
   if (!out.length) throw new Malformed('case has no source file');
@@ -247,9 +262,9 @@ function caseDigest(files) {
 
 function rawFiles(dir) {
   const map = new Map();
-  for (const name of fs.readdirSync(dir).sort()) {
-    if (!fs.statSync(path.join(dir, name)).isFile()) continue;
-    map.set(name, fs.readFileSync(path.join(dir, name)));
+  for (const { entry, isDir, full } of entries(dir)) {
+    if (isDir) continue;
+    map.set(entry, fs.readFileSync(full));
   }
   return map;
 }
