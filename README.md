@@ -5,7 +5,6 @@
 **Read an MCP server before you trust it.**
 
 [![test](https://github.com/cheappicklecodes/mcp-audit/actions/workflows/test.yml/badge.svg)](https://github.com/cheappicklecodes/mcp-audit/actions/workflows/test.yml)
-[![npm](https://img.shields.io/npm/v/mcpaudit?color=d33)](https://www.npmjs.com/package/mcpaudit)
 [![license](https://img.shields.io/badge/license-MIT-black)](LICENSE)
 
 </div>
@@ -15,7 +14,7 @@ You install an MCP server and hand it your shell, your files and your tokens. It
 `mcp-audit` reads both — the code and the descriptions — and tells you what the thing can actually reach.
 
 ```bash
-npx mcpaudit .
+npx github:cheappicklecodes/mcp-audit .
 ```
 
 Zero dependencies. One command. No account. Nothing is executed and nothing phones home.
@@ -74,11 +73,13 @@ $ mcp-audit ./filesystem-mcp
 ## Install
 
 ```bash
-npx mcpaudit .          # run without installing
-npm i -g mcpaudit       # or keep it
+npx github:cheappicklecodes/mcp-audit .   # run straight from the repo
+git clone https://github.com/cheappicklecodes/mcp-audit && npm link   # or keep it
 ```
 
-The package is `mcpaudit`; the command it installs is `mcp-audit`. The bare name on npm was taken by an unrelated placeholder.
+Runs on Node 18 and up.
+
+The package is named `mcpaudit` and the command it installs is `mcp-audit`; the bare name on npm was taken by an unrelated placeholder. It is not on the npm registry yet, so use the GitHub form above — `npx mcpaudit` will start working once it is published.
 
 ## Usage
 
@@ -118,13 +119,13 @@ Keys: `exclude`, `include`, `disable`, `only`, `minSeverity`, `failOn`. CLI flag
 ### In CI
 
 ```yaml
-- run: npx mcpaudit . --fail-on critical
+- run: npx github:cheappicklecodes/mcp-audit . --fail-on critical
 ```
 
 Or feed GitHub code scanning:
 
 ```yaml
-- run: npx mcpaudit . --format sarif > audit.sarif
+- run: npx github:cheappicklecodes/mcp-audit . --format sarif > audit.sarif
 - uses: github/codeql-action/upload-sarif@v4
   with: { sarif_file: audit.sarif }
 ```
