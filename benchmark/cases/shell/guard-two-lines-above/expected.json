@@ -1,6 +1,18 @@
 {
-  "rule": "shell-injection",
-  "expect": ["shell-injection/high"],
+  "schemaVersion": 2,
+  "id": "shell/guard-two-lines-above",
+  "family": "shell-injection",
+  "caseType": "positive",
   "note": "assert() throws but a static reader cannot prove it; high, not critical",
-  "knownGap": false
+  "expectedFindings": [
+    {
+      "id": "shell-0",
+      "rule": "shell-injection",
+      "severity": "high",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "shell-0"
+      }
+    }
+  ]
 }

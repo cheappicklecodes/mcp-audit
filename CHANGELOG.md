@@ -1,6 +1,31 @@
 # Changelog
 
+## 0.5.0
+
+The benchmark stops scoring detection and grading as the same bit, and findings gain real source spans.
+
+Previous scoring demanded an exact set match per case. If a case expected one finding and the scanner returned
+that finding **plus** an unrelated one, the case counted as a false negative - the vulnerability *was* detected.
+Severity was part of the match too, so "found it" and "graded it right" collapsed into one pass/fail.
+
+- **three separate measurements.** Exact-case conformance, finding-level precision and recall, and severity
+  agreement. Detection is no longer a function of noise or of the grade.
+- **anchored expectations.** A case marks its sinks with `/* @mcpbench:<id>:start */` comments; a reported
+  finding matches by falling inside the marker. Rewrapping a fixture no longer invalidates it, and matching is
+  one-to-one, so two findings inside one anchor cannot both count.
+- **`expected.json` is `schemaVersion` 2** with `id`, `family`, `caseType` and `expectedFindings`. The old shape is
+  rejected, not silently zero-scored. `knownGap` is gone: a case either matches or it does not.
+- **exit codes.** `0` clean, `1` regression, `2` broken harness (bad schema, dangling marker). A malformed corpus
+  used to be able to look like a clean run.
+- **provenance in the output.** Maintainer-authored, no independent or held-out cases, said above the numbers
+  every run, so a bare "100%" cannot be quoted without it.
+- every anchored rule now emits `location` with offsets and columns. `capability-mismatch` anchors on the
+  capabilities block instead of the whole file, and the Python path sink spans the join expression.
+- fix: the argument rule read an argv array with a parenthesis matcher, so its span ran long. Arrays now balance
+  on brackets.
+
 ## 0.4.0
+
 
 The guards now follow the value, and the scanner says how sure it is.
 

@@ -1,4 +1,4 @@
 export function run(req) {
   const { command } = req.params.arguments;
-  execSync(command);
+  /* @mcpbench:shell-0:start */execSync(command)/* @mcpbench:shell-0:end */;
 }

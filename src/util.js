@@ -32,6 +32,25 @@ export function makeFinding(rule, file, line, evidence, extra = {}) {
   };
 }
 
+export function spanOf(source, start, end) {
+  const from = Math.max(0, start);
+  const to = Math.max(from, end);
+  const at = (offset) => {
+    let line = 1;
+    let column = 1;
+    for (let i = 0; i < offset && i < source.length; i += 1) {
+      if (source.charCodeAt(i) === 10) {
+        line += 1;
+        column = 1;
+      } else column += 1;
+    }
+    return { line, column };
+  };
+  const a = at(from);
+  const b = at(to);
+  return { startOffset: from, endOffset: to, startLine: a.line, startColumn: a.column, endLine: b.line, endColumn: b.column };
+}
+
 export function rel(root, abs) {
   const r = path.relative(root, abs);
   return r.split(path.sep).join('/');

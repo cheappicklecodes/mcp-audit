@@ -3,5 +3,5 @@ export function run(args) {
   if (ALLOWED.includes("ls")) {
     log("checked");
   }
-  execSync(cmd, { shell: true });
+  /* @mcpbench:shell-0:start */execSync(cmd, { shell: true })/* @mcpbench:shell-0:end */;
 }

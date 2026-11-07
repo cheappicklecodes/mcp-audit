@@ -1,7 +1,18 @@
 {
-  "rule": "shell-injection",
-  "expect": [
-    "shell-injection/critical"
-  ],
-  "note": null
+  "schemaVersion": 2,
+  "id": "shell/via-local",
+  "family": "shell-injection",
+  "caseType": "positive",
+  "note": null,
+  "expectedFindings": [
+    {
+      "id": "shell-0",
+      "rule": "shell-injection",
+      "severity": "critical",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "shell-0"
+      }
+    }
+  ]
 }

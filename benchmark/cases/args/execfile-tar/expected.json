@@ -1,7 +1,18 @@
 {
-  "rule": "argument-injection",
-  "expect": [
-    "argument-injection/low"
-  ],
-  "note": null
+  "schemaVersion": 2,
+  "id": "args/execfile-tar",
+  "family": "argument-injection",
+  "caseType": "positive",
+  "note": null,
+  "expectedFindings": [
+    {
+      "id": "argument-0",
+      "rule": "argument-injection",
+      "severity": "low",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "argument-0"
+      }
+    }
+  ]
 }

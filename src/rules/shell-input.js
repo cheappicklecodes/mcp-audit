@@ -1,4 +1,4 @@
-import { makeFinding, lineOf, snippet } from '../util.js';
+import { makeFinding, lineOf, snippet, spanOf } from '../util.js';
 import { stripComments, matchesBalanced } from './_scope.js';
 import { isCaller, isCallerish, symbolOf, tracesToCaller, guardFor } from './_flow.js';
 
@@ -6,6 +6,20 @@ const SHELL_EXEC = /\b(execSync|exec)\s*\(/g;
 const FILE_EXEC = /\b(execFileSync|execFile)\s*\(/g;
 const SPAWN = /\bspawn(Sync)?\s*\(/g;
 const DIRECT_VAR = /^\s*[\w$.]*\b(?:command|cmd|shell|executable|exec|bin|program|prog)\b\s*$/;
+
+function closingBracket(text, from) {
+  let depth = 0;
+  for (let i = from; i < Math.min(text.length, from + 400); i += 1) {
+    if (text[i] === '[') depth += 1;
+    else if (text[i] === ']') {
+      depth -= 1;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+const sinkSpan = (text, from, open) => spanOf(text, from, open + matchesBalanced(text, open).length + 2);
 
 const CALLER_ARG = (text, arg, index) => {
   const first = arg.split(',')[0].trim();
@@ -42,6 +56,7 @@ const shellInjection = {
         makeFinding(this, file.relative, lineOf(text, m.index), snippet(text, m.index, 55), {
           severity: guard.state === 'partial' ? 'high' : 'critical',
           detail: describe(guard, forcedShell),
+          location: sinkSpan(text, m.index, open),
         }),
       );
       if (out.length >= 3) break;
@@ -80,6 +95,7 @@ const executableControl = {
         makeFinding(this, file.relative, lineOf(text, m.index), snippet(text, m.index, 55), {
           severity: guard.state === 'partial' ? 'medium' : 'high',
           detail: guard.state === 'partial' ? 'validated, nothing rejects an unknown program' : 'executable name comes from the caller',
+          location: sinkSpan(text, m.index, open),
         }),
       );
       if (out.length >= 3) break;
@@ -110,12 +126,15 @@ const argumentInjection = {
       if (!TERMINATOR_PROGRAM.test(program)) continue;
       const bracket = text.indexOf('[', open);
       if (bracket < 0) continue;
-      const array = matchesBalanced(text, bracket, 300);
-      if (!array || !isCallerish(text, array, m.index)) continue;
+      const end = closingBracket(text, bracket);
+      if (end < 0) continue;
+      const array = text.slice(bracket, end + 1);
+      if (!isCallerish(text, array, m.index)) continue;
       if (/["'`]--["'`]/.test(array)) continue;
       out.push(
         makeFinding(this, file.relative, lineOf(text, m.index), snippet(text, m.index, 55), {
           detail: `${program.replace(/["'`]/g, '')} honours --, caller args, no terminator`,
+          location: spanOf(text, m.index, open + call.length + 2),
         }),
       );
       if (out.length >= 3) break;

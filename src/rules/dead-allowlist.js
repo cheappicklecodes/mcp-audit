@@ -1,4 +1,4 @@
-import { makeFinding, lineOf, snippet } from '../util.js';
+import { makeFinding, lineOf, snippet, spanOf } from '../util.js';
 import { stripComments } from './_scope.js';
 
 const DECL = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*\[\s*(\/|\n)/g;
@@ -26,6 +26,7 @@ export const unusedAllowlist = {
       out.push(
         makeFinding(this, file.relative, lineOf(text, m.index), snippet(text, m.index, 55), {
           detail: name + ' is defined and never referenced',
+          location: spanOf(text, m.index, m.index + name.length),
         }),
       );
       if (out.length >= 2) break;

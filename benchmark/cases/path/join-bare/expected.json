@@ -1,7 +1,18 @@
 {
-  "rule": "path-traversal",
-  "expect": [
-    "path-traversal/high"
-  ],
-  "note": null
+  "schemaVersion": 2,
+  "id": "path/join-bare",
+  "family": "path-traversal",
+  "caseType": "positive",
+  "note": null,
+  "expectedFindings": [
+    {
+      "id": "path-0",
+      "rule": "path-traversal",
+      "severity": "high",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "path-0"
+      }
+    }
+  ]
 }

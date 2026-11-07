@@ -1,8 +1,18 @@
 {
-  "rule": "caller-executable",
-  "expect": [
-    "caller-executable/high"
-  ],
+  "schemaVersion": 2,
+  "id": "exec/array-index",
+  "family": "caller-executable",
+  "caseType": "positive",
   "note": null,
-  "knownGap": false
+  "expectedFindings": [
+    {
+      "id": "caller-0",
+      "rule": "caller-executable",
+      "severity": "high",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "caller-0"
+      }
+    }
+  ]
 }

@@ -1,6 +1,8 @@
 {
-  "rule": "path-traversal",
-  "expect": [],
+  "schemaVersion": 2,
+  "id": "path/try-catch-relative",
+  "family": "path-traversal",
+  "caseType": "negative",
   "note": "negative-case",
-  "knownGap": false
+  "expectedFindings": []
 }

@@ -1,8 +1,18 @@
 {
-  "rule": "path-traversal",
-  "expect": [
-    "path-traversal/high"
-  ],
+  "schemaVersion": 2,
+  "id": "path/normalize-only",
+  "family": "path-traversal",
+  "caseType": "positive",
   "note": "normalize does not clamp",
-  "knownGap": false
+  "expectedFindings": [
+    {
+      "id": "path-0",
+      "rule": "path-traversal",
+      "severity": "high",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "path-0"
+      }
+    }
+  ]
 }

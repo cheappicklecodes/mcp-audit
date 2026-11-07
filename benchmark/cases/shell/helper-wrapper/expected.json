@@ -1,8 +1,18 @@
 {
-  "rule": "shell-injection",
-  "expect": [
-    "shell-injection/critical"
-  ],
+  "schemaVersion": 2,
+  "id": "shell/helper-wrapper",
+  "family": "shell-injection",
+  "caseType": "positive",
   "note": null,
-  "knownGap": false
+  "expectedFindings": [
+    {
+      "id": "shell-0",
+      "rule": "shell-injection",
+      "severity": "critical",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "shell-0"
+      }
+    }
+  ]
 }

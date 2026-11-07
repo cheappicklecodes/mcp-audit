@@ -1,5 +1,8 @@
 {
-  "rule": "argument-injection",
-  "expect": [],
-  "note": null
+  "schemaVersion": 2,
+  "id": "args/no-convention",
+  "family": "argument-injection",
+  "caseType": "negative",
+  "note": null,
+  "expectedFindings": []
 }

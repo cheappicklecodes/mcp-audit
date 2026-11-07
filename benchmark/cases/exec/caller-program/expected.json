@@ -1,7 +1,18 @@
 {
-  "rule": "caller-executable",
-  "expect": [
-    "caller-executable/high"
-  ],
-  "note": null
+  "schemaVersion": 2,
+  "id": "exec/caller-program",
+  "family": "caller-executable",
+  "caseType": "positive",
+  "note": null,
+  "expectedFindings": [
+    {
+      "id": "caller-0",
+      "rule": "caller-executable",
+      "severity": "high",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "caller-0"
+      }
+    }
+  ]
 }

@@ -1,4 +1,4 @@
-import { makeFinding, lineOf, snippet } from '../util.js';
+import { makeFinding, lineOf, snippet, spanOf } from '../util.js';
 import { stripComments, enclosingBlock, assignedTo, matchesBalanced } from './_scope.js';
 import { isCallerish, guardFor } from './_flow.js';
 
@@ -44,6 +44,7 @@ export const pathTraversal = {
         makeFinding(this, file.relative, lineOf(text, m.index), snippet(text, m.index, 55), {
           severity: state === 'none' ? 'high' : 'medium',
           detail: describe(state, guard, target, Boolean(target && clampOn(text, m.index, target))),
+          location: spanOf(text, m.index, py ? m.index + m[0].length : sinkEnd(text, m.index, anchor, py)),
         }),
       );
       if (out.length >= 4) break;
@@ -52,6 +53,13 @@ export const pathTraversal = {
   },
 };
 
+function sinkEnd(text, from, anchor, py) {
+  if (py) {
+    const nl = text.indexOf('\n', anchor);
+    return nl < 0 ? text.length : nl;
+  }
+  return anchor + matchesBalanced(text, anchor).length + 2;
+}
 function rootBefore(text, anchor) {
   const before = text.slice(Math.max(0, anchor - 80), anchor).replace(/\([^()]*\)/g, ' ');
   const hits = [...before.matchAll(/[\w$.]+/g)];

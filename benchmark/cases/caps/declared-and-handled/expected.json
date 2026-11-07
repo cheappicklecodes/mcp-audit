@@ -1,5 +1,8 @@
 {
-  "rule": "capability-mismatch",
-  "expect": [],
-  "note": null
+  "schemaVersion": 2,
+  "id": "caps/declared-and-handled",
+  "family": "capability-mismatch",
+  "caseType": "negative",
+  "note": null,
+  "expectedFindings": []
 }

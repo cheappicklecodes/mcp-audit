@@ -1,5 +1,8 @@
 {
-  "rule": "caller-executable",
-  "expect": [],
-  "note": null
+  "schemaVersion": 2,
+  "id": "exec/pinned-by-allowlist",
+  "family": "caller-executable",
+  "caseType": "negative",
+  "note": null,
+  "expectedFindings": []
 }

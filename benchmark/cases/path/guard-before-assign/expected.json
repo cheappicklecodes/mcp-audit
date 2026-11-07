@@ -1,8 +1,18 @@
 {
-  "rule": "path-traversal",
-  "expect": [
-    "path-traversal/high"
-  ],
+  "schemaVersion": 2,
+  "id": "path/guard-before-assign",
+  "family": "path-traversal",
+  "caseType": "positive",
   "note": "guard runs before the join, on the raw input",
-  "knownGap": true
+  "expectedFindings": [
+    {
+      "id": "path-0",
+      "rule": "path-traversal",
+      "severity": "high",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "path-0"
+      }
+    }
+  ]
 }

@@ -58,7 +58,8 @@ export function scan(root, options = {}) {
       if (count >= MAX_PER_RULE_FILE) continue;
       for (const finding of produced) {
         if ((perFileRule.get(key) ?? 0) >= MAX_PER_RULE_FILE) break;
-        const lineKey = `${rule.id}\u0000${finding.file}\u0000${finding.line}`;
+        const where = finding.location?.startOffset ?? finding.line;
+        const lineKey = `${rule.id}\u0000${finding.file}\u0000${where}`;
         if (seen.has(lineKey)) continue;
         seen.add(lineKey);
         findings.push(finding);

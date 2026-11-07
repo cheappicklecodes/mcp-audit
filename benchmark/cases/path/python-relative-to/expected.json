@@ -1,5 +1,8 @@
 {
-  "rule": "path-traversal",
-  "expect": [],
-  "note": null
+  "schemaVersion": 2,
+  "id": "path/python-relative-to",
+  "family": "path-traversal",
+  "caseType": "negative",
+  "note": null,
+  "expectedFindings": []
 }

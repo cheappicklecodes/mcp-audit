@@ -1,42 +1,84 @@
 # Benchmark
 
-Deliberately small corpus of MCP-shaped code, one directory per case, so a rule change can be scored instead of eyeballed.
+A small, deliberately shaped corpus of MCP server code, one directory per case. It exists so a rule change can be scored instead of eyeballed.
 
 ```bash
-node benchmark/bench.mjs     # exits 1 on any miss
-npm test                     # includes this as a test
+node benchmark/bench.mjs           # report; exits 1 on any regression
+node benchmark/bench.mjs --json    # same numbers, machine readable
+npm test                           # runs it as a test
 ```
 
-Each case carries an `expected.json`:
+## Bias, stated up front
+
+The same people who write the rules write the fixtures. **100% here means "no regression against shapes the rules were written to see", not "this finds real vulnerabilities".** The report prints that provenance above the numbers, per family, every run, so the figure cannot be quoted without it.
+
+## A case is a directory
+
+```
+cases/<family>/<name>/
+  index.ts        the code under test
+  expected.json   schemaVersion 2
+```
+
+`index.ts` marks each sink it expects to be reported:
+
+```ts
+/* @mcpbench:path-0:start */path.join(ROOT, args.file)/* @mcpbench:path-0:end */
+```
+
+and `expected.json` names that marker:
 
 ```json
-{ "rule": "shell-injection", "expect": ["shell-injection/critical"], "note": "why", "knownGap": false }
+{
+  "schemaVersion": 2,
+  "id": "path/join-bare",
+  "family": "path-traversal",
+  "caseType": "positive",
+  "note": "root joined to caller input, never clamped",
+  "expectedFindings": [
+    { "id": "path-0", "rule": "path-traversal", "severity": "high", "anchor": { "file": "index.ts", "marker": "path-0" } }
+  ]
+}
 ```
 
-`expect` is the exact list of `rule/severity` pairs the scanner must return. An empty list means the case must scan clean.
+Markers are masked to spaces before scanning, so they never shift a finding. A negative case carries `"expectedFindings": []` and still needs a source file.
 
-## Shape
+## Three measurements, not one score
+
+| Measure | Question it answers |
+| --- | --- |
+| Exact-case | Did this case match completely, severity included? |
+| Precision / recall | Was each expected finding found, and only those? |
+| Severity agreement | When it was found, was the grade right? |
+
+Detection and grading are separate. A case that finds the vulnerability *and* adds an unrelated finding is a recall hit and a precision miss — not a false negative. That distinction is the point of the split; the old scorer conflated them.
+
+Matching is one-to-one and span-based: a reported finding must fall inside the marker for the expected one. Two findings inside one anchor cannot both satisfy it.
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | valid corpus, all cases exact |
+| `1` | valid corpus, at least one case regressed |
+| `2` | invalid harness: bad schema, dangling marker, unreadable case |
+
+A broken benchmark exits 2, never a falsy 0. Invalid evaluation is a harness failure, not a clean bill of health.
+
+## Shape of the corpus
 
 - `*/direct-*`, `*/bare` — the plain vulnerability
 - `*/clamped`, `*/fixed-*`, `*/with-terminator` — the safe twin
 - `*/bypass-*` — the same bug wearing a guard that looks like it applies
-- `caps/*` — capability declaration versus handler reality
+- `caps/*` — capability declaration against handler reality
 
-## Scoring
+## What is still missing
 
-`bench.mjs` prints precision, recall and accuracy, and exits non-zero if any case misses. Precision counts cases with at least one unexpected finding, so a case that returns the right thing *plus* noise still counts against it.
+The corpus contains no independently authored cases and no held-out split. Until it does, treat the numbers as regression conformance, and expect the misses below:
 
-## Honesty
-
-This corpus was written by the same people who write the rules, so 100% here means "no regression", not "solved". Every case is a shape the current heuristics were designed to see. The next useful thing is a corpus the rules were *not* written against, which is why cases marked `knownGap` stay in the tree after they start passing: they are the shapes that broke the first attempt.
-
-## Gap ledger
-
-Shapes a static reader of this kind is expected to miss, kept so the misses are visible rather than silent:
-
-- taint through a helper function the scanner does not follow
-- a `startsWith` clamp on a literal that is not the root it is joined to
-- guards that run before the join, on the raw input rather than the result
+- taint through a helper the scanner does not follow
+- a clamp on a literal that is not the root it is joined to
+- guards running before the join, on the raw input
 - anything assembled at runtime (spread capabilities, dynamic registration)
 - non-JavaScript beyond the narrow Python path rules
 

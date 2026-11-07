@@ -167,7 +167,9 @@ The last two are tagged in the report. A run that is mostly `likely` deserves mo
 npm run bench
 ```
 
-It prints precision, recall and accuracy and fails on any regression. 100% there means "nothing broke", not "solved"; the corpus was written by the same people as the rules. Its README keeps a gap ledger of shapes the scanner is expected to miss.
+It separates three things that used to be one score: did the case match exactly, was each expected finding found without noise (precision and recall), and was the severity right. Detection and grading no longer collapse into a single bit, so a detected vulnerability plus an unrelated finding counts as a recall hit, not a miss.
+
+100% there means "nothing broke", not "solved"; the same people write the fixtures and the rules, and the report prints that provenance above the numbers every run. Expects anchored by `/* @mcpbench:<id>:start */` comments, so line drift does not break a case. Exit 2 means the harness itself is broken.
 
 ## What it does not do
 

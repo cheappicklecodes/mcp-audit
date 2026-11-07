@@ -4,5 +4,5 @@ export function one(args) {
   return p;
 }
 export function two(args) {
-  return path.join(ROOT, args.b);
+  return /* @mcpbench:path-0:start */path.join(ROOT, args.b)/* @mcpbench:path-0:end */;
 }

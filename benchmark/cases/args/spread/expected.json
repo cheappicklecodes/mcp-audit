@@ -1,8 +1,18 @@
 {
-  "rule": "argument-injection",
-  "expect": [
-    "argument-injection/low"
-  ],
+  "schemaVersion": 2,
+  "id": "args/spread",
+  "family": "argument-injection",
+  "caseType": "positive",
   "note": null,
-  "knownGap": false
+  "expectedFindings": [
+    {
+      "id": "argument-0",
+      "rule": "argument-injection",
+      "severity": "low",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "argument-0"
+      }
+    }
+  ]
 }

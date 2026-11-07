@@ -1,7 +1,18 @@
 {
-  "rule": "shell-injection",
-  "expect": [
-    "shell-injection/high"
-  ],
-  "note": null
+  "schemaVersion": 2,
+  "id": "shell/allowlisted-open",
+  "family": "shell-injection",
+  "caseType": "positive",
+  "note": null,
+  "expectedFindings": [
+    {
+      "id": "shell-0",
+      "rule": "shell-injection",
+      "severity": "high",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "shell-0"
+      }
+    }
+  ]
 }

@@ -1,5 +1,8 @@
 {
-  "rule": "caller-executable",
-  "expect": [],
-  "note": null
+  "schemaVersion": 2,
+  "id": "exec/fixed-program",
+  "family": "caller-executable",
+  "caseType": "negative",
+  "note": null,
+  "expectedFindings": []
 }

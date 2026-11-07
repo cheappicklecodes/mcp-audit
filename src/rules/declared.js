@@ -1,4 +1,4 @@
-import { makeFinding, lineOf, snippet } from '../util.js';
+import { makeFinding, lineOf, snippet, spanOf } from '../util.js';
 import { stripComments } from './_scope.js';
 
 const EMPTY_CAPS = /capabilities\s*:\s*\{\s*(?:tools\s*:\s*\{\s*\}\s*,?\s*)?\}/;
@@ -30,27 +30,32 @@ export const capabilityMismatch = {
       return [
         makeFinding(this, file.relative, lineOf(text, empty.index), snippet(text, empty.index, 45), {
           detail: 'declared empty, tools served anyway',
+          location: spanOf(text, empty.index, empty.index + empty[0].length),
           confidence: 'confirmed',
         }),
       ];
     }
 
-    if (DECLARED_TOOLS.test(text) && serves && !HANDLES_CALL.test(text)) {
+    const advertised = DECLARED_TOOLS.exec(text);
+    if (advertised && serves && !HANDLES_CALL.test(text)) {
       return [
-        makeFinding(this, file.relative, lineOf(text, 0), 'tools advertised, no tools/call handler seen', {
+        makeFinding(this, file.relative, lineOf(text, advertised.index), 'tools advertised, no tools/call handler seen', {
           severity: 'low',
           detail: 'advertised but possibly not implemented',
+          location: spanOf(text, advertised.index, advertised.index + advertised[0].length),
           confidence: 'inconclusive',
         }),
       ];
     }
 
-    if (DYNAMIC_CAPS.test(text) && !DECLARED_TOOLS.test(text) && !empty) {
+    const dynamic = DYNAMIC_CAPS.exec(text);
+    if (dynamic && !advertised && !empty) {
       return [
-        makeFinding(this, file.relative, lineOf(text, 0), 'capabilities assembled at runtime', {
+        makeFinding(this, file.relative, lineOf(text, dynamic.index), 'capabilities assembled at runtime', {
           severity: 'info',
           detail: 'inconclusive: registration is dynamic, read it by hand',
           confidence: 'inconclusive',
+          location: spanOf(text, dynamic.index, dynamic.index + dynamic[0].length),
         }),
       ];
     }

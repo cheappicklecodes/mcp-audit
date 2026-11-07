@@ -1,7 +1,18 @@
 {
-  "rule": "capability-mismatch",
-  "expect": [
-    "capability-mismatch/low"
-  ],
-  "note": null
+  "schemaVersion": 2,
+  "id": "caps/bypass-unrelated-switch",
+  "family": "capability-mismatch",
+  "caseType": "bypass",
+  "note": null,
+  "expectedFindings": [
+    {
+      "id": "capability-0",
+      "rule": "capability-mismatch",
+      "severity": "low",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "capability-0"
+      }
+    }
+  ]
 }

@@ -1,7 +1,18 @@
 {
-  "rule": "capability-mismatch",
-  "expect": [
-    "capability-mismatch/medium"
-  ],
-  "note": null
+  "schemaVersion": 2,
+  "id": "caps/empty-with-tools",
+  "family": "capability-mismatch",
+  "caseType": "positive",
+  "note": null,
+  "expectedFindings": [
+    {
+      "id": "capability-0",
+      "rule": "capability-mismatch",
+      "severity": "medium",
+      "anchor": {
+        "file": "index.ts",
+        "marker": "capability-0"
+      }
+    }
+  ]
 }

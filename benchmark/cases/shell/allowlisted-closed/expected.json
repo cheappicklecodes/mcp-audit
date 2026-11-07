@@ -1,5 +1,8 @@
 {
-  "rule": "shell-injection",
-  "expect": [],
-  "note": null
+  "schemaVersion": 2,
+  "id": "shell/allowlisted-closed",
+  "family": "shell-injection",
+  "caseType": "negative",
+  "note": null,
+  "expectedFindings": []
 }
