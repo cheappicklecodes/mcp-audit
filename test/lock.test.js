@@ -77,3 +77,14 @@ test('a malformed lock is treated as missing', () => {
   assert.equal(readLock(path.join(dir, LOCK_NAME)), null);
   assert.equal(checkLock(dir, quiet), 2);
 });
+
+test("line endings do not change the fingerprint", () => {
+  const dir = tempCopy("good-server");
+  const file = path.join(dir, "index.js");
+  const lf = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+  fs.writeFileSync(file, lf);
+  const before = fingerprint(dir, discover(dir, {}).files);
+  fs.writeFileSync(file, lf.replace(/\n/g, "\r\n"));
+  const after = fingerprint(dir, discover(dir, {}).files);
+  assert.equal(before, after);
+});

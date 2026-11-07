@@ -60,7 +60,7 @@ export function readText(abs) {
     const buf = fs.readFileSync(abs);
     if (buf.length > 2 * 1024 * 1024) return null;
     if (buf.includes(0)) return null;
-    return buf.toString('utf8');
+    return buf.toString('utf8').replace(/\r\n/g, '\n');
   } catch {
     return null;
   }

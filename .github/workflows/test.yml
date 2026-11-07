@@ -17,8 +17,15 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm test
-      - run: node bin/mcp-audit.js test/fixtures/good-server --fail-on high
-      - run: node bin/mcp-audit.js test/fixtures/bad-server --fail-on critical
+      - name: a clean server passes
+        run: node bin/mcp-audit.js test/fixtures/good-server --fail-on high
+      - name: a bad server trips the gate
+        run: |
+          set +e
+          node bin/mcp-audit.js test/fixtures/bad-server --fail-on critical
+          code=$?
+          echo "exit=$code"
+          test "$code" -eq 1
       - name: audit self
         run: node bin/mcp-audit.js . --format sarif > audit.sarif
       - uses: github/codeql-action/upload-sarif@v3
