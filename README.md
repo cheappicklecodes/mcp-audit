@@ -1,5 +1,7 @@
 # mcp-audit
 
+[![test](https://github.com/cheappicklecodes/mcp-audit/actions/workflows/test.yml/badge.svg)](https://github.com/cheappicklecodes/mcp-audit/actions/workflows/test.yml)
+
 **Read an MCP server before you trust it.**
 
 You install an MCP server and it gets your shell, your files and your tokens. It also gets to describe itself to the model in prose that you will never read. `mcp-audit` reads both — the code and the descriptions — and tells you what the thing can actually reach.
